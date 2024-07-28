@@ -25,6 +25,7 @@ ALLOWED_HOSTS: list[str] = [] # TODO: change later, when not DEBUG = True
 
 INSTALLED_APPS = [
     'api.users.apps.UsersConfig',
+    'api.rides.apps.RidesConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

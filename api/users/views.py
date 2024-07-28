@@ -1,11 +1,12 @@
 from django.contrib.auth import get_user_model
 from rest_framework import permissions, status, generics
-from rest_framework.viewsets import ModelViewSet, ViewSet
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes
 
-from .serializers import UserSerializer, MyTokenObtainPairSerializer
+from .serializers import UserSerializer, MyTokenObtainPairSerializer, PassengerSerializer
+from .models import Passenger
 
 User = get_user_model()
 
