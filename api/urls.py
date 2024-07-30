@@ -10,7 +10,7 @@ from .rides import views as rides_views
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
-# TODO: router.register(r'passengers', views.PassengerViewSet)
+router.register(r'passengers', views.PassengerViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

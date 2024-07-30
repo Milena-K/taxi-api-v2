@@ -21,12 +21,12 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_superuser(self, username, email, password, **extra_fields):
+    # TODO: can't auth with admin user
+    def create_superuser(self, username, password, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
-        email = self.normalize_email()
-        superuser = self.model(email=email, username=username)
+        superuser = self.model(username=username)
         superuser.set_password(make_password(password))
         superuser.save()
         return superuser

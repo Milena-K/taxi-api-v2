@@ -11,22 +11,17 @@ class User(AbstractBaseUser):
     username = models.CharField(max_length=50, blank=False, unique=True)
     email = models.EmailField(blank=False, unique=True)
     profile_picture = models.CharField(blank=True)
-    role = models.CharField(
-        max_length=1, choices=[("D", ("Driver")), ("C", ("Customer"))], help_text="Please register as Driver or Customer"
-    )
-    #ride_history should be defined in Ride model
 
     def __str__(self):
-        return "Username: " + self.username + " Role: " + self.role
+        return "Username: " + self.username
 
 
-# filter based on role
-class Driver(User):
+class Driver(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, unique=True)
     car_type = models.CharField(blank=False)
     rating = models.FloatField(blank=False)
 
 
-# filter based on role
-class Passenger(User):
+class Passenger(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, unique=True)
     credit_card = models.CharField(blank=True)
-

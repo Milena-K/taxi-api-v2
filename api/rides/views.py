@@ -22,11 +22,10 @@ def request_ride(request: Request):
     API endpoint for clients to create a request for a ride from the drivers.
     """
     data = JSONParser().parse(request) # request.data?
-    passenger_serializer = UserSerializer(request.user)
+    passenger_serializer = UserSerializer(request.user) # TODO: change to passenger serializer
     username = passenger_serializer.data.pop("username")
     passenger = User.objects.get(username=username)
     data["passenger"] = passenger.pk
-    print(data)
     ride_serializer = RideRequestSerializer(data=data)
     if ride_serializer.is_valid():
         ride_serializer.save()
