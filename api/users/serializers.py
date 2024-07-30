@@ -34,47 +34,51 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 class PassengerSerializer(serializers.HyperlinkedModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    # user = UserSerializer()
+    user = UserSerializer()
     class Meta:
         model = Passenger
         fields = ['credit_card', 'user']
         depth = 1
 
+    # tested, works nicely
+    def create(self, validated_data):
+        user_data = validated_data.pop("user")
+        user = User.objects.create(**user_data)
+        passenger = Passenger.objects.create(user=user, **validated_data)
+        return passenger
+
+    # TODO: test if it updates correctly
+    def update(self, instance, validated_data):
+            instance.credit_card = validated_data.get('credit_card')
+            instance.save()
+
+            nested_serializer = self.fields['user']
+            nested_instance = instance.user
+            # note the data is `pop`ed
+            nested_data = validated_data.pop('user')
+            nested_serializer.update(nested_instance, nested_data)
+            # this will not throw an exception,
+            # as `profile` is not part of `validated_data`
+            return instance
+
     # def update(self, instance, validated_data):
     #     instance.credit_card = validated_data.get('credit_card')
     #     instance.save()
 
-    #     user_data = validated_data.get('user')
-    #     user = User.objects.get(username=user_data.get('username'))
-    #     user.username = user_data.get('username', user.username)
-    #     user.email = user_data.get('email', user.email)
-    #     user.profile_picture = user_data.get('profile_picture', user.profile_picture)
-
-
-    # def create(self, validated_data):
-    #     items = validated_data.pop('items', None)
-    #     invoice = Invoice(**validated_data)
-    #     invoice.save()
-    #     for item in items:
-    #         InvoiceItem.objects.create(invoice=invoice, **item)
-    #     return invoice
-
-
-    ##### example
-    # items = validated_data.get('items')
-
-    # for item in items:
-    #     item_id = item.get('id', None)
-    #     if item_id:
-    #         inv_item = InvoiceItem.objects.get(id=item_id, invoice=instance)
-    #         inv_item.name = item.get('name', inv_item.name)
-    #         inv_item.price = item.get('price', inv_item.price)
-    #         inv_item.save()
+    #     user_data = validated_data.get('user', None)
+    #     if user_data:
+    #         username = user_data.get('username')
+    #         user = User.objects.get(username=username)
+    #         user.username = user_data.get('username', user.username)
+    #         user.email = user_data.get('email', user.email)
+    #         user.profile_picture = user_data.get('profile_picture', user.profile_picture)
+    #         password = user_data.get('password', user.password)
+    #         user.set_password(password)
+    #         user.save()
+    #         return user
     #     else:
-    #         InvoiceItem.objects.create(account=instance, **item)
+    #         raise Exception("Missing field 'user'.")
 
-    # return instance
 # class DriverSerializer(serializers.HyperlinkedModelSerializer):
 #     user = serializers.StringRelatedField(queryset=User.objects.all())
 #     class Meta:

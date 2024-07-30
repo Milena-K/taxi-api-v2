@@ -55,7 +55,7 @@ class PassengerViewSet(ViewSet):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        if self.action in ['create', 'update']:
+        if self.action in ['update']:
             permission_classes = [permissions.IsAuthenticated]
         else:
             permission_classes = [permissions.AllowAny]
@@ -67,15 +67,27 @@ class PassengerViewSet(ViewSet):
 
     def create(self, request: Request):
         data = JSONParser().parse(request)
-        user_serializer = UserSerializer(request.user)
-        username = user_serializer.data.pop("username")
-        user = User.objects.get(username=username)
-        data["user"] = user.pk
         passenger_serializer = PassengerSerializer(data=data)
         if passenger_serializer.is_valid():
-             passenger_serializer.save()
-             return Response(data=passenger_serializer.data, status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+            passenger_serializer.save()
+            return Response(data=passenger_serializer.data, status=status.HTTP_200_OK)
+        return Response(data=passenger_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+    # this create method is with the permission.IsAuthenticated
+    # def create(self, request: Request):
+    #     data = JSONParser().parse(request)
+    #     user_serializer = UserSerializer(request.user)
+    #     username = user_serializer.data.pop("username")
+    #     user = User.objects.get(username=username)
+    #     data["user"] = user.__dict__
+    #     passenger_serializer = PassengerSerializer(data=data)
+    #     if passenger_serializer.is_valid():
+    #          passenger_serializer.save()
+    #          return Response(data=passenger_serializer.data, status=status.HTTP_200_OK)
+    #     return Response(data=passenger_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None):
         """
@@ -86,7 +98,8 @@ class PassengerViewSet(ViewSet):
         """
         if pk:
             try:
-                passenger = Passenger.objects.get(user=pk)
+                user = User.objects.get(pk=pk)
+                passenger = Passenger.objects.get(user=user)
                 serializer = PassengerSerializer(passenger)
                 return Response(data=serializer.data, status=status.HTTP_200_OK)
             except ObjectDoesNotExist:
@@ -98,14 +111,12 @@ class PassengerViewSet(ViewSet):
 
         url /passengers/1/
         """
-        passenger = Passenger.objects.get(user=pk)
+        user = User.objects.get(pk=pk)
+        passenger = Passenger.objects.get(user=user)
         serializer = PassengerSerializer(passenger, data=request.data, partial=True)
-        # TODO: find the user and update it's info as well.
-        # Pop the unecessary
         if serializer.is_valid():
             serializer.save()
-            updated_passenger = serializer.data
-            return Response(data=updated_passenger, status=status.HTTP_201_CREATED)
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
