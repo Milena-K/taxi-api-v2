@@ -9,8 +9,9 @@ from .users import views
 from .rides import views as rides_views
 
 router = routers.DefaultRouter()
-router.register(r'users', views.UserViewSet)
-router.register(r'passengers', views.PassengerViewSet)
+router.register(r'users', views.UserViewSet, basename="users")
+router.register(r'passengers', views.PassengerViewSet, basename="passengers")
+router.register(r'drivers', views.DriverViewSet, basename="drivers")
 
 urlpatterns = [
     path('', include(router.urls)),
