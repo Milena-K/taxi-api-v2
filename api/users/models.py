@@ -1,9 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .managers import UserManager
 
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ["email", "password"]
     USERNAME_FIELD = "username"
     objects = UserManager()
@@ -11,9 +11,12 @@ class User(AbstractBaseUser):
     username = models.CharField(max_length=50, blank=False, unique=True)
     email = models.EmailField(blank=False, unique=True)
     profile_picture = models.CharField(blank=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True) # TODO: change later to False, and only True if user confirms email
 
     def __str__(self):
-        return "Username: " + self.username
+        return self.username
 
 
 class Driver(models.Model):

@@ -24,6 +24,8 @@ ALLOWED_HOSTS: list[str] = [] # TODO: change later, when not DEBUG = True
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'api.users.apps.UsersConfig',
     'api.rides.apps.RidesConfig',
     'django.contrib.admin',
@@ -35,6 +37,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -75,7 +78,7 @@ DATABASES = { # TODO: hide these details later
     "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": "taxidb",
-            "USER": "taxiadmin",
+            "USER": "postgres",
             "PASSWORD": "taxi",
             "HOST": "localhost",
             "PORT": "5432",
@@ -132,3 +135,31 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "sesame.backends.ModelBackend"
+]
+
+SESAME_MAX_AGE = 30
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        # "OPTIONS": {
+        #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        # }
+    },
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
+ASGI_APPLICATION = 'api.asgi.application'

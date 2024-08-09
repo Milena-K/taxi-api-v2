@@ -27,6 +27,11 @@ class RideRequestViewSet(ModelViewSet):
             permission_classes = [permissions.AllowAny]
         return [permission() for permission in permission_classes]
 
+    def create(self, request, args, kwargs):
+        super().create(request, args, kwargs)
+
+
+
 
 class RideOfferViewSet(ModelViewSet):
     queryset = RideOffer.objects.all()

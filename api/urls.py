@@ -16,6 +16,7 @@ router.register(r'ride-request', rides_views.RideRequestViewSet, basename="ride-
 router.register(r'ride-offer', rides_views.RideOfferViewSet, basename="ride-offer")
 router.register(r'ride-accepted', rides_views.RideAcceptedViewSet, basename="ride-accepted")
 
+
 urlpatterns = [
     path('', include(router.urls)),
     path('register/', views.RegisterView.as_view()),
@@ -26,5 +27,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

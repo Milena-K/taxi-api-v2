@@ -3,7 +3,7 @@
 Create and run the container for postgres
 
 docker run --name some-postgres -p 5432:5432 \
-    -e POSTGRES_USER=taxi -e POSTGRES_DB=taxi -e POSTGRES_PASSWORD=taxi -d postgres
+-e POSTGRES_USER=taxiadmin -e POSTGRES_DB=taxidb -e POSTGRES_PASSWORD=taxi -d postgres
 
 Create and run the container for redis
 
