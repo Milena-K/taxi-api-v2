@@ -1,3 +1,4 @@
+import json
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from rest_framework import permissions, status, generics
@@ -7,11 +8,15 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.core.exceptions import ObjectDoesNotExist
 
 from .serializers import UserSerializer, MyTokenObtainPairSerializer,  PassengerSerializer, DriverSerializer
 from .models import Passenger, Driver
 
 User = get_user_model()
+channel_layer = get_channel_layer()
 
 # list, get user by ID, edit user by ID
 class UserViewSet(ModelViewSet):
@@ -26,6 +31,21 @@ class UserViewSet(ModelViewSet):
 #Login User
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
+    def post(self, request):
+        response = super().post(request)
+        user = User.objects.get(username=request.data.get('username'))
+        try:
+            driver = Driver.objects.get(pk=user.pk)
+            if driver:
+                # TODO: test if driver subscribed to group "drivers"
+                channel_name = f"drivers_{user.pk}"
+                async_to_sync(channel_layer.group_add)("drivers", channel_name)
+        except ObjectDoesNotExist:
+            # TODO: how to handle this better?
+            print("the user is a passenger")
+
+        return response
 
 
 #Register User
