@@ -8,17 +8,6 @@ from ..users.models import Passenger, Driver
 User = get_user_model()
 
 
-class PassengerAccessPermission(permissions.BasePermission):
-    message = 'You are trying to change data you don\'t own.'
-
-    def has_permission(self, request, view):
-        user_pk = request.user.pk
-        get_object_or_404(Passenger, user_id=user_pk)
-        passenger = int(request.data.get("passenger", 0))
-        if not passenger:
-            self.message = "Please give value for the passenger id."
-            return False
-        return user_pk == passenger
 
 class DriverAccessPermission(permissions.BasePermission):
     message = 'You are trying to change data you don\'t own.'

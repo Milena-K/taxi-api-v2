@@ -78,13 +78,12 @@ DATABASES = { # TODO: hide these details later
     "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": "taxidb",
-            "USER": "postgres",
+            "USER": "taxiadmin",
             "PASSWORD": "taxi",
             "HOST": "localhost",
             "PORT": "5432",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -163,3 +162,7 @@ CHANNEL_LAYERS = {
 }
 
 ASGI_APPLICATION = 'api.asgi.application'
+
+# TODO: replace these URLs with the production locations of each service.
+CELERY_BROKER_URL = "redis://localhost:6379"
+CELERY_RESULT_BACKEND = "redis://localhost:6379"
