@@ -12,6 +12,7 @@ class DriverConsumer(WebsocketConsumer):
     def connect(self):
         self.driver_id = self.scope['url_route']['kwargs']['driver_id']
         self.group_name = f"driver_{self.driver_id}"
+        self.groups.append(self.group_name) # important otherwise some cleanup does not happened on disconnect.
         async_to_sync(self.channel_layer.group_add)(
             self.group_name,
             self.channel_name
@@ -26,7 +27,6 @@ class DriverConsumer(WebsocketConsumer):
                 "type": "ride_accepted",
                 "ride_uuid": data["ride_uuid"],
                 "passenger": data["passenger"],
-                "vehicle": data["vehicle"],
                 "price": data["price"],
                 "room_uuid": data["room_uuid"]
             }
@@ -40,9 +40,51 @@ class DriverConsumer(WebsocketConsumer):
 
     def ride_accepted(self, event):
         self.send(text_data=json.dumps({
-                "ride_uuid": event["ride_uuid"],
-                "passenger": event["passenger"],
-                "vehicle": event["vehicle"],
-                "price": event["price"],
-                "room_uuid": event["room_uuid"]
+            "message": event["message"],
+            "passenger": event["passenger"],
+            "starting_location": event["starting_location"],
+            "destination": event["destination"],
+            "price": event["price"],
+            "dropoff_time": event["dropoff_time"],
+            "ride_duration": event["ride_duration"],
+            "ride_uuid": event["ride_uuid"]
+        }))
+
+    def send_location_data(self, event):
+        """
+        the driver sends constant location messages to user
+        """
+        self.send(text_data=json.dumps({
+            "current_location": event["current_location"],
+            "driver": event["driver"]
+        }, cls=DjangoJSONEncoder))
+
+class PassengerConsumer(WebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.group_name = None
+
+    def connect(self):
+        self.passenger_id = self.scope['url_route']['kwargs']['passenger_id']
+        self.group_name = f"passenger_{self.passenger_id}"
+        self.groups.append(self.group_name) # important otherwise some cleanup does not happened on disconnect.
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name,
+            self.channel_name
+        )
+        self.accept()
+
+    def disconnect(self, close_code):
+        async_to_sync(self.channel_layer.group_discard)(
+            self.group_name,
+            self.channel_name
+        )
+
+    def new_driver_offer(self, event):
+        self.send(text_data=json.dumps({
+            "driver": event["driver"],
+            "price": event["price"],
+            "dropoff_time": event["dropoff_time"],
+            "ride_duration": event["ride_duration"],
+            "ride_uuid": event["ride_uuid"]
         }, cls=DjangoJSONEncoder))

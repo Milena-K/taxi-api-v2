@@ -1,100 +1,104 @@
-from rest_framework.viewsets import ViewSet
-from rest_framework import permissions, status
-from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.request import Request
-from rest_framework.decorators import permission_classes, authentication_classes, api_view
-from rest_framework.permissions import IsAuthenticated
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-
-from .models import Ride
-#from .serializers import RideRequestSerializer, RideOfferSerializer, RideAcceptedSerializer
-from ..users.serializers import UserSerializer
-from ..users.models import Passenger, Driver
-from .tasks import find_driver_for_ride, send_ride_offer, accept_ride_offer, start_ride
 import uuid
+
+from channels.layers import (
+    get_channel_layer,
+)
+from django.contrib.auth import (
+    get_user_model,
+)
+from rest_framework import (
+    status,
+)
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+)
+from rest_framework.permissions import (
+    IsAuthenticated,
+)
+from rest_framework.response import (
+    Response,
+)
+
+from ..users.models import (
+    Driver,
+    Passenger,
+)
+from .tasks import (
+    accept_ride_offer,
+    find_driver_for_ride,
+    send_ride_offer,
+    cancel_ride_task,
+)
 
 User = get_user_model()
 channel_layer = get_channel_layer()
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def create_ride(request):
-    passenger = request.user.pk
-    starting_location = request.data.get("starting_location")
-    destination = request.data.get("destination")
+    passenger_id = request.user.pk
+    is_passenger = Passenger.objects.get(pk=passenger_id)
+    if not is_passenger:
+        return Response({"message": "You must be a passenger to create a ride."}, status.HTTP_401_UNAUTHORIZED)
+
+    starting_location = request.data.get("starting_location") # expects (long, lat)
+    destination = request.data.get("destination") # expects (long, lat)
     ride_uuid = uuid.uuid4()
-    if not (starting_location and destination and ride_uuid):
-        return Response({"message": "starting_location, destination and ride_uuid are required."}, status.HTTP_400_BAD_REQUEST)
-    find_driver_for_ride.delay(passenger, starting_location, destination, ride_uuid)
+    if not (starting_location and destination):
+        return Response({"message": "starting_location and destination are required."}, status.HTTP_400_BAD_REQUEST)
+    find_driver_for_ride.delay(passenger_id, starting_location, destination, ride_uuid)
     return Response(request.data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def offer_ride(request):
     driver = request.user.pk
-    vehicle = request.data.get("vehicle")
+    is_driver = Driver.objects.get(pk=driver)
+    if not is_driver:
+        return Response({"message": "You must be a driver to offer a ride."}, status.HTTP_401_UNAUTHORIZED)
+
+    passenger_id = request.data.get("passenger_id")
     price = request.data.get("price")
+    dropoff_time = request.data.get("dropoff_time")
+    ride_duration = request.data.get("ride_duration")
     ride_uuid = request.data.get("ride_uuid")
-    if price is None or ride_uuid is None or ride_uuid is None:
-        return Response({"message": "price, vehicle and ride_uuid are required."}, status.HTTP_400_BAD_REQUEST)
-    send_ride_offer.delay(driver, vehicle, price, ride_uuid)
+    if not (price and ride_uuid and ride_uuid and passenger_id):
+        return Response({"message": "price, ride_uuid, ride_duration, dropoff_time and passenger_id are required."}, status.HTTP_400_BAD_REQUEST)
+    send_ride_offer.delay(driver, price, ride_duration, dropoff_time, ride_uuid, passenger_id)
     return Response(request.data, status.HTTP_200_OK)
     # there should be displayed more info about the driver on the frontend
-    # arrival time on the starting location and estimated time to the final destination are calculated automatically.
 
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def accept_ride(request):
     passenger_id = request.user.pk
-    driver_id = request.data.get("driver")
-    vehicle = request.data.get("vehicle")
+    is_passenger = Passenger.objects.get(pk=passenger_id)
+    if not is_passenger:
+        return Response({"message": "You must be a passenger to accept a ride."}, status.HTTP_401_UNAUTHORIZED)
+
+    driver_id = request.data.get("driver_id")
+    starting_location = request.data.get("starting_location") # expects (long, lat)
+    destination = request.data.get("destination") # expects (long, lat)
     price = request.data.get("price")
     ride_uuid = request.data.get("ride_uuid")
-    room_uuid = uuid.uuid4()
-    if not (driver_id and vehicle and price and ride_uuid):
+    dropoff_time = request.data.get("dropoff_time")
+    ride_duration = request.data.get("ride_duration")
+    if not (driver_id and starting_location and destination and price and ride_uuid and dropoff_time and ride_duration):
         return Response({"message": "driver_id, vehicle, price and ride_uuid are required."}, status.HTTP_400_BAD_REQUEST)
-    accept_ride_offer.delay(driver_id, passenger_id, vehicle, price, ride_uuid, room_uuid)
+    accept_ride_offer.delay(driver_id, passenger_id, starting_location, destination, ride_duration, dropoff_time, price, ride_uuid)
     return Response(request.data, status.HTTP_200_OK)
+
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def start_ride_driver(request):
-    driver_id = request.user.pk
-    passenger_id = request.data.get("passenger")
-    vehicle = request.data.get("vehicle")
-    price = request.data.get("price")
+@permission_classes([IsAuthenticated])
+def cancel_ride(request):
+    passenger_id = request.user.pk
+    is_passenger = Passenger.objects.get(pk=passenger_id)
+    if not is_passenger:
+        return Response({"message": "You must be a passenger to accept a ride."}, status.HTTP_401_UNAUTHORIZED)
+
     ride_uuid = request.data.get("ride_uuid")
-    room_uuid = request.data.get("room_uuid")
-    if not (passenger_id and vehicle and price and ride_uuid and room_uuid):
-        return Response({"message": "passenger, vehicle, price, ride_uuid, room_uuid are required."}, status.HTTP_400_BAD_REQUEST)
-    start_ride.delay(driver_id, passenger_id, vehicle, price, ride_uuid, room_uuid)
+    cancel_ride_task.delay(passenger_id, ride_uuid)
     return Response(request.data, status.HTTP_200_OK)
-
-
-
-# class RideOfferViewSet(ModelViewSet):
-#     queryset = RideOffer.objects.all()
-#     serializer_class = RideOfferSerializer
-
-#     def get_permissions(self):
-#         if self.action in ['create', 'update', 'partial_update', 'delete']:
-#             permission_classes = [permissions.IsAuthenticated, DriverAccessPermission]
-#         else:
-#             permission_classes = [permissions.AllowAny]
-#         return [permission() for permission in permission_classes]
-
-
-# class RideAcceptedViewSet(ModelViewSet):
-#     queryset = RideAccepted.objects.all()
-#     serializer_class = RideAcceptedSerializer
-
-#     def get_permissions(self):
-#         if self.action in ['create', 'update', 'partial_update', 'delete']:
-#             permission_classes = [permissions.IsAuthenticated, PassengerAccessPermission]
-#         else:
-#             permission_classes = [permissions.AllowAny]
-#         return [permission() for permission in permission_classes]

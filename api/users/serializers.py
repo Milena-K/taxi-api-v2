@@ -16,7 +16,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['username', 'email', 'profile_picture', 'password', 'pk']
         # extra_kwargs = {'id': {'read_only': True, 'required': True}}
 
-    def validate_password(self, password: str) -> str:
+    def validate_password(self, password: str):
         """
         Hash value passed by user.
 
@@ -85,3 +85,7 @@ class DriverSerializer(serializers.HyperlinkedModelSerializer):
         nested_data = validated_data.pop('user')
         nested_serializer.update(nested_instance, nested_data)
         return instance
+
+class ProfileSerializer(serializers.Serializer):
+    rides_taken = serializers.IntegerField()
+    created = serializers.DateTimeField()

@@ -18,38 +18,26 @@ from .models import Passenger, Driver
 User = get_user_model()
 channel_layer = get_channel_layer()
 
-# list, get user by ID, edit user by ID
+# TODO:
+# user login
+# signup
+# verify
+# update profile details
+# retrieve
+
 class UserViewSet(ModelViewSet):
     """
-    API endpoint that allows users to be viewed or edited.
+    API endpoint for handling user data
     """
     queryset = User.objects.all() # TODO: add order_by()
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny] # TODO: change to IsAdminOnly
 
-
-#Login User
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-    def post(self, request):
-        response = super().post(request)
-        user = User.objects.get(username=request.data.get('username'))
-        try:
-            driver = Driver.objects.get(pk=user.pk)
-            if driver:
-                # TODO: test if driver subscribed to group "drivers"
-                channel_name = f"drivers_{user.pk}"
-                async_to_sync(channel_layer.group_add)("drivers", channel_name)
-        except ObjectDoesNotExist:
-            # TODO: how to handle this better?
-            print("the user is a passenger")
-
-        return response
-
-
 #Register User
 class RegisterView(generics.CreateAPIView):
+    """
+    API endpoint for registering users
+    """
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = UserSerializer
@@ -58,9 +46,15 @@ class RegisterView(generics.CreateAPIView):
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def getProfile(request):
+    """
+    API endpoint for getting user's profile data
+    """
     user = request.user
-    serializer = UserSerializer(user, many=False)
-    return Response(serializer.data)
+    profile_data = {
+        "username": user.username,
+        "profile_picture": user.profile_picture
+    }
+    return Response(data=profile_data, status=status.HTTP_200_OK)
 
 
 class PassengerViewSet(ViewSet):
@@ -149,7 +143,6 @@ class PassengerViewSet(ViewSet):
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={"message": "You don't have the right authorization."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # TODO: this method is deleting only passengers and not cascading to users
     def destroy(self, request, pk=None):
         """
         DELETE method for deleting passenger info
@@ -198,3 +191,5 @@ class DriverViewSet(ModelViewSet):
                 return Response(data=serializer.data, status=status.HTTP_201_CREATED)
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={"message": "You don't have the right authorization."}, status=status.HTTP_401_UNAUTHORIZED)
+
+
