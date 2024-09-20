@@ -6,6 +6,9 @@ from channels.layers import (
 from django.contrib.auth import (
     get_user_model,
 )
+from django.db.models import (
+    ObjectDoesNotExist,
+)
 from rest_framework import (
     status,
 )
@@ -19,19 +22,30 @@ from rest_framework.permissions import (
 from rest_framework.response import (
     Response,
 )
+from datetime import datetime
 
 from ..users.models import (
     Driver,
     Passenger,
 )
+from ..rides.models import (
+    Ride,
+    Rating,
+)
 from ..rides.serializers import (
     RideSerializer,
+)
+from ..rides.permissions import (
+    IsPassenger,
+    IsDriver,
 )
 from .tasks import (
     accept_ride_offer,
     find_driver_for_ride,
     send_ride_offer,
+    start_ride_task,
     cancel_ride_task,
+    cancel_active_ride_task,
 )
 
 User = get_user_model()
@@ -39,28 +53,20 @@ channel_layer = (
     get_channel_layer()
 )
 
+# TODO create GET ride by ride uuid
+# TODO create PATCH ride by ride uuid
 
 @api_view(["POST"])
 @permission_classes(
-    [IsAuthenticated]
+    [
+        IsAuthenticated,
+        IsPassenger,
+    ]
 )
-def create_ride(request):
+def request_ride(request):
     passenger_id = (
         request.user.pk
     )
-    is_passenger = (
-        Passenger.objects.get(
-            pk=passenger_id
-        )
-    )
-    if not is_passenger:
-        return Response(
-            {
-                "message": "You must be a passenger to create a ride."
-            },
-            status.HTTP_401_UNAUTHORIZED,
-        )
-
     starting_location = request.data.get(
         "starting_location"
     )  # expects (long, lat)
@@ -94,94 +100,78 @@ def create_ride(request):
 
 @api_view(["POST"])
 @permission_classes(
-    [IsAuthenticated]
+    [
+        IsAuthenticated,
+        IsDriver,
+    ]
 )
 def offer_ride(request):
     driver = request.user.pk
-    is_driver = (
-        Driver.objects.get(
-            pk=driver
-        )
-    )
-    if not is_driver:
-        return Response(
-            {
-                "message": "You must be a driver to offer a ride."
-            },
-            status.HTTP_401_UNAUTHORIZED,
-        )
-
     passenger_id = (
         request.data.get(
             "passenger_id"
         )
     )
+    # TODO the price should be calculated on the server
     price = request.data.get(
         "price"
-    )
-    dropoff_time = (
-        request.data.get(
-            "dropoff_time"
-        )
-    )
-    ride_duration = (
-        request.data.get(
-            "ride_duration"
-        )
     )
     ride_uuid = (
         request.data.get(
             "ride_uuid"
         )
     )
-    if not (
-        price
-        and ride_uuid
-        and ride_uuid
-        and passenger_id
-    ):
-        return Response(
-            {
-                "message": "price, ride_uuid, ride_duration, dropoff_time and passenger_id are required."
-            },
-            status.HTTP_400_BAD_REQUEST,
+    try:
+        ride = Ride.objects.get(
+            ride_uuid=ride_uuid
         )
-    send_ride_offer.delay(
-        driver,
-        price,
-        ride_duration,
-        dropoff_time,
-        ride_uuid,
-        passenger_id,
-    )
-    return Response(
-        request.data,
-        status.HTTP_200_OK,
-    )
-    # there should be displayed more info about the driver on the frontend
+        if ride:
+            return Response(
+                {
+                    "message": "This ride already exists, try another ride_uuid."
+                },
+                status.HTTP_400_BAD_REQUEST,
+            )
+    except ObjectDoesNotExist:
+        dropoff_time = 0  # TODO calculate
+        ride_duration = 0  # TODO calculate
+        if not (
+            price
+            and ride_uuid
+            and passenger_id
+        ):
+            return Response(
+                {
+                    "message": "price, ride_uuid and passenger_id are required."
+                },
+                status.HTTP_400_BAD_REQUEST,
+            )
+        send_ride_offer.delay(
+            driver,
+            price,
+            ride_duration,
+            dropoff_time,
+            ride_uuid,
+            passenger_id,
+        )
+        return Response(
+            request.data,
+            status.HTTP_200_OK,
+        )
+        # there should be displayed more info about the driver on the frontend
 
 
 @api_view(["POST"])
 @permission_classes(
-    [IsAuthenticated]
+    [
+        IsAuthenticated,
+        IsPassenger,
+    ]
 )
 def accept_ride(request):
     passenger_id = (
         request.user.pk
     )
-    is_passenger = (
-        Passenger.objects.get(
-            pk=passenger_id
-        )
-    )
-    if not is_passenger:
-        return Response(
-            {
-                "message": "You must be a passenger to accept a ride."
-            },
-            status.HTTP_401_UNAUTHORIZED,
-        )
-
     driver_id = (
         request.data.get(
             "driver_id"
@@ -208,6 +198,11 @@ def accept_ride(request):
             "dropoff_time"
         )
     )
+    start_time = (
+        request.data.get(
+            "start_time"
+        )
+    )
     ride_duration = (
         request.data.get(
             "ride_duration"
@@ -224,105 +219,310 @@ def accept_ride(request):
     ):
         return Response(
             {
-                "message": "driver_id, vehicle, price and ride_uuid are required."
+                "message": "driver_id, starting_location, destination, dropoff_time, ride_duration, price and ride_uuid are required."
             },
             status.HTTP_400_BAD_REQUEST,
         )
-    # create a ride
-    serializer = (
-        RideSerializer(
-            driver_id,
-            passenger_id,
-            starting_location,
-            destination,
-            ride_duration,
-            dropoff_time,
-            price,
-            ride_uuid,
-        )
-    )
-    if serializer.is_valid():
-        serializer.save()
-        accept_ride_offer.delay(
-            driver_id,
-            passenger_id,
-            starting_location,
-            destination,
-            ride_duration,
-            dropoff_time,
-            price,
-            ride_uuid,
+
+    try:
+        Ride.objects.get(
+            ride_uuid=ride_uuid
         )
         return Response(
-            request.data,
-            status.HTTP_200_OK,
+            {
+                "message": "This ride already exists."
+            },
+            status.HTTP_400_BAD_REQUEST,
         )
-    return Response(
-        request.data,
-        status.HTTP_200_OK,
-    )
+    except ObjectDoesNotExist:
+        # create a ride
+        serializer = RideSerializer(
+            data={
+                "status": Ride.Status.CREATED,
+                "passenger": passenger_id,
+                "driver": driver_id,
+                "ride_uuid": ride_uuid,
+                "starting_location": starting_location,
+                "destination": destination,
+                "ride_duration": ride_duration,
+                "dropoff_time": dropoff_time,
+                "start_time": start_time,
+                "price": price,
+            }
+        )
+        if serializer.is_valid():
+            serializer.save()
+            accept_ride_offer.delay(
+                driver_id,
+                passenger_id,
+                starting_location,
+                destination,
+                ride_duration,
+                dropoff_time,
+                price,
+                ride_uuid,
+            )
+            return Response(
+                request.data,
+                status.HTTP_200_OK,
+            )
+        return Response(
+            serializer.errors,
+            status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @api_view(["POST"])
 @permission_classes(
-    [IsAuthenticated]
+    [
+        IsAuthenticated,
+        IsDriver,
+    ]
 )
-def finish_ride(request):
+def start_ride(request):
     driver = request.user.pk
-    is_driver = (
-        Driver.objects.get(
-            pk=driver
-        )
-    )
-    if not is_driver:
-        return Response(
-            {
-                "message": "You must be a driver to finish a ride."
-            },
-            status.HTTP_401_UNAUTHORIZED,
-        )
-
-    passenger_id = (
+    passenger = (
         request.data.get(
-            "ride_uuid"
+            "passenger"
         )
     )
-    price = request.data.get(
-        "price"
-    )
-
-
-@api_view(["POST"])
-@permission_classes(
-    [IsAuthenticated]
-)
-def cancel_ride(request):
-    passenger_id = (
-        request.user.pk
-    )
-    is_passenger = (
-        Passenger.objects.get(
-            pk=passenger_id
-        )
-    )
-    if not is_passenger:
-        return Response(
-            {
-                "message": "You must be a passenger to accept a ride."
-            },
-            status.HTTP_401_UNAUTHORIZED,
-        )
-
     ride_uuid = (
         request.data.get(
             "ride_uuid"
         )
     )
-    cancel_ride_task.delay(
-        passenger_id,
-        ride_uuid,
+    if not (
+        ride_uuid and
+        passenger
+
+    ):
+        return Response(
+            {
+                "message": "ride_uuid and passenger are required."
+            },
+            status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        ride = Ride.objects.get(
+            ride_uuid=ride_uuid
+        )
+        if (
+            ride.status
+            == Ride.Status.COMPLETED
+        ):
+            return Response(
+                {
+                    "message": "This ride is completed."
+                },
+                status.HTTP_400_BAD_REQUEST,
+            )
+        elif (
+            ride.status
+            == Ride.Status.CREATED
+        ):
+            ride.start_time = (
+                datetime.now()
+            )
+            ride.status = (
+                Ride.Status.ACTIVE
+            )
+            ride.save()
+            # the driver should periodically send location data to passenger ws
+
+            start_ride_task.delay(passenger, driver, ride_uuid)
+        return Response(
+            {
+                "message": "This ride is started."
+            },
+            status.HTTP_200_OK,
+        )
+    except ObjectDoesNotExist:
+        return Response(
+            {
+                "message": "No ride with this ride_uuid was found."
+            },
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+
+@api_view(["POST"])
+@permission_classes(
+    [
+        IsAuthenticated,
+        IsDriver,
+    ]
+)
+def finish_ride(
+    request,
+):  # successfull canceling from driver
+    passenger = (
+        request.data.get(
+            "passenger"
+        )
     )
-    return Response(
-        request.data,
-        status.HTTP_200_OK,
+    driver = request.user.pk
+    ride_uuid = (
+        request.data.get(
+            "ride_uuid"
+        )
     )
+    if not (
+        ride_uuid and
+        passenger
+    ):
+        return Response(
+            {
+                "message": "ride_uuid and passenger are required."
+            },
+            status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        ride = Ride.objects.get(
+            ride_uuid=ride_uuid
+        )
+        if (
+            ride.status
+            == Ride.Status.ACTIVE
+        ):
+            ride.end_time = (
+                datetime.now()
+            )
+            ride.status = Ride.Status.COMPLETED
+            # calculate price: curernt_time - start_time * 7 (per minute)
+            time_now = datetime.now().astimezone()
+            price = (
+                (
+                    time_now
+                    - ride.start_time
+                ).seconds
+                / 60
+            ) * 7
+            ride.price = price
+            ride.save()
+            # send message to passenger the ammount owned
+            cancel_active_ride_task.delay(
+                passenger,
+                driver,
+                price,
+                ride_uuid,
+            )
+            return Response(
+                {
+                    "message": "This ride has completed."
+                },
+                status.HTTP_200_OK,
+            )
+        return Response(
+            {
+                "message": "This ride is not active."
+            },
+            status.HTTP_400_BAD_REQUEST,
+        )
+    except ObjectDoesNotExist:
+        return Response(
+            {
+                "message": "Can't find the ride you are looking for"
+            },
+            status.HTTP_404_NOT_FOUND,
+        )
+
+
+@api_view(["POST"])
+@permission_classes(
+    [
+        IsAuthenticated,
+        IsPassenger,
+    ]
+)
+def cancel_ride(
+    request,
+):  # the passenger changes their mind
+    passenger_id = (
+        request.user.pk
+    )
+    driver_id = (
+        request.data.get(
+            "driver_id"
+        )
+    )
+    ride_uuid = (
+        request.data.get(
+            "ride_uuid"
+        )
+    )
+    if not (
+        ride_uuid and
+        driver_id
+    ):
+        return Response(
+            {
+                "message": "ride_uuid and driver_id are required."
+            },
+            status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        ride = Ride.objects.get(
+            ride_uuid=ride_uuid
+        )
+        if (
+            ride.status
+            == Ride.Status.CREATED
+        ):  # if ride hasn't started yet
+            # send direct message to driver that the ride is canceled
+            ride.status = Ride.Status.CANCELED
+            ride.save()
+            cancel_ride_task(
+                passenger_id,
+                driver_id,
+                ride_uuid,
+            )
+            return Response(
+                {
+                    "message": "requested ride is canceled.",
+                },
+                status.HTTP_200_OK,
+            )
+        elif (
+            ride.status
+            == Ride.Status.ACTIVE
+        ):
+            # calculate price: curernt_time - start_time * 7 (per minute)
+            # send message to passenger the ammount owned
+            time_now = datetime.now().astimezone()
+            ride.status = Ride.Status.CANCELED
+            price = (
+                (
+                    time_now
+                    - ride.start_time
+                ).seconds
+                / 60
+            ) * 7
+            ride.price = price
+            ride.save()
+            cancel_active_ride_task.delay(
+                passenger_id,
+                driver_id,
+                price,
+                ride_uuid,
+            )
+            return Response(
+                {
+                    "message": "active ride is canceled.",
+                    "price": price,
+                },
+                status.HTTP_200_OK,
+            )
+        return Response(
+            {
+                "message": "this ride is already canceled.",
+            },
+            status.HTTP_200_OK,
+        )
+
+    except ObjectDoesNotExist:
+        return Response(
+            {
+                "message": "Can't find the ride you are looking for"
+            },
+            status.HTTP_404_NOT_FOUND,
+        )

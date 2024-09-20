@@ -12,34 +12,47 @@ from ..users.models import (
     Passenger,
     Driver,
 )
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+)
 
 
 User = get_user_model()
 
 
-class DriverAccessPermission(
+class IsDriver(
     permissions.BasePermission
 ):
-    message = "You are trying to change data you don't own."
+    message = "This action is only allowed for drivers."
 
     def has_permission(
         self, request, view
     ):
-        user_pk = (
-            request.user.pk
-        )
-        get_object_or_404(
-            Driver,
-            user_id=user_pk,
-        )
-        driver = int(
-            request.data.get(
-                "driver", 0
+        try:
+            Driver.objects.get(
+                pk=request.user.pk
             )
-        )
-        if not driver:
-            self.message = "Please give value for the driver id."
+            return True
+        except (
+            ObjectDoesNotExist
+        ):
             return False
-        return (
-            user_pk == driver
-        )
+
+
+class IsPassenger(
+    permissions.BasePermission
+):
+    message = "This action is only allowed for passengers."
+
+    def has_permission(
+        self, request, view
+    ):
+        try:
+            Passenger.objects.get(
+                pk=request.user.pk
+            )
+            return True
+        except (
+            ObjectDoesNotExist
+        ):
+            return False

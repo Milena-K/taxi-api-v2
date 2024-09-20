@@ -13,6 +13,18 @@ User = get_user_model()
 
 
 class Ride(models.Model):
+    class Status(
+        models.IntegerChoices
+    ):
+        CREATED = 0
+        ACTIVE = 1
+        COMPLETED = 2
+        CANCELED = 3
+
+    status = models.IntegerField(
+        choices=Status,
+        default=Status.CREATED,
+    )
     passenger = models.ForeignKey(
         Passenger,
         on_delete=models.CASCADE,
@@ -41,21 +53,54 @@ class Ride(models.Model):
     )
     start_time = (
         models.DateTimeField(
-            blank=False
+            blank=True,
+            null=True,
         )
     )
     end_time = (
         models.DateTimeField(
-            auto_now_add=True,
-            blank=False,
+            blank=True,
+            null=True,
         )
     )
     price = models.FloatField(
         blank=False, default=0
     )
+    dropoff_time = (
+        models.DateTimeField(
+            blank=False
+        )
+    )
+    ride_duration = (
+        models.IntegerField(
+            blank=False
+        )
+    )
 
     def __str__(self):
-        return f"Ride(passenger={self.passenger}, driver={self.driver}, ride_uuid={self.ride_uuid})"
+        return (
+            "Ride(passenger={},"
+            " driver={},"
+            " ride_uuid={}),"
+            " starting_location={},"
+            " destination={},"
+            " start_time={},"
+            " end_time={},"
+            " price={},"
+            " ride_duration={},"
+            " dropoff_time={}"
+        ).format(
+            self.passenger,
+            self.driver,
+            self.ride_uuid,
+            self.starting_location,
+            self.destination,
+            self.start_time,
+            self.end_time,
+            self.price,
+            self.ride_duration,
+            self.dropoff_time,
+        )
 
 
 class Rating(models.Model):
@@ -86,7 +131,16 @@ class Rating(models.Model):
     )
 
     def __str__(self):
-        if self.comment:
-            return f"Rating driver {self.driver} with {self.rating} by passenger {self.passenger} for ride {self.ride} with comment: {self.comment}"
-        else:
-            return f"Rating driver {self.driver} with {self.rating} by passenger {self.passenger} for ride {self.ride} with no comment."
+        return (
+            "Rating(passenger={},"
+            " driver={},"
+            " ride={}),"
+            " rating={},"
+            " comment={}"
+        ).format(
+            self.passenger,
+            self.driver,
+            self.ride,
+            self.rating,
+            self.comment,
+        )

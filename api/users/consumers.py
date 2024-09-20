@@ -113,6 +113,19 @@ class DriverConsumer(
             )
         )
 
+    def ride_canceled_by_passenger(
+        self, event
+    ):
+        self.send(
+            text_data=json.dumps(
+                {
+                    "message": event["message"],
+                    "passenger": event["passenger"],
+                    "ride_uuid": event["ride_uuid"],
+                }
+            )
+        )
+
     def send_location_data(
         self, event
     ):
@@ -198,5 +211,52 @@ class PassengerConsumer(
                     ],
                 },
                 cls=DjangoJSONEncoder,
+            )
+        )
+
+    def start_ride(
+        self, event
+    ):
+        self.send(
+            text_data=json.dumps(
+                {
+                    "message": event[
+                        "message"
+                    ],
+                    "passenger": event[
+                        "passenger"
+                    ],
+                    "driver": event[
+                        "driver"
+                    ],
+                    "ride_uuid": event[
+                        "ride_uuid"
+                    ],
+                }
+            )
+        )
+
+    def cancel_ride(
+        self, event
+    ):
+        self.send(
+            text_data=json.dumps(
+                {
+                    "message": event[
+                        "message"
+                    ],
+                    "passenger": event[
+                        "passenger"
+                    ],
+                    "driver": event[
+                        "driver"
+                    ],
+                    "price": event[
+                        "price"
+                    ],
+                    "ride_uuid": event[
+                        "ride_uuid"
+                    ],
+                }
             )
         )

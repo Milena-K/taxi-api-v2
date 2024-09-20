@@ -87,14 +87,24 @@ WSGI_APPLICATION = (
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {  # TODO: hide these details later
+DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "taxidb",
-        "USER": "taxiadmin",
-        "PASSWORD": "taxi",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "NAME": os.getenv(
+            "DB_NAME"
+        ),
+        "USER": os.getenv(
+            "DB_USER"
+        ),
+        "PASSWORD": os.getenv(
+            "DB_PASSWORD"
+        ),
+        "HOST": os.getenv(
+            "DB_HOST"
+        ),
+        "PORT": os.getenv(
+            "DB_PORT"
+        ),
     },
     "test": {
         "NAME": "test_db",

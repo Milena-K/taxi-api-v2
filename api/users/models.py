@@ -76,7 +76,10 @@ class Driver(models.Model):
     )
 
     def __str__(self):
-        return str(self.user)
+        return (
+            "driver: "
+            + str(self.user)
+        )
 
 
 class Passenger(models.Model):
@@ -98,4 +101,7 @@ class Passenger(models.Model):
     )
 
     def __str__(self):
-        return str(self.user)
+        return (
+            "passenger: "
+            + str(self.user)
+        )

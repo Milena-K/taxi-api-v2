@@ -59,8 +59,8 @@ urlpatterns = [
     ),
     path(
         "request-ride/",
-        rides_views.create_ride,
-        name="create-ride",
+        rides_views.request_ride,
+        name="request-ride",
     ),
     path(
         "offer-ride/",
@@ -70,8 +70,18 @@ urlpatterns = [
         "accept-ride/",
         rides_views.accept_ride,
     ),
-    # path('request_ride/', rides_views.request_ride),
-    # path('rides/', rides_views.list_rides),
+    path(
+        "start-ride/",
+        rides_views.start_ride,
+    ),
+    path(
+        "finish-ride/",
+        rides_views.finish_ride,
+    ),
+    path(
+        "cancel-ride/",
+        rides_views.cancel_ride,
+    ),
     path(
         "admin/",
         admin.site.urls,

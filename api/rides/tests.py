@@ -83,7 +83,7 @@ class AccountTests(
             )
         )
         url = reverse(
-            "create-ride"
+            "request-ride"
         )
         data = {
             "starting_location": "skopje",
