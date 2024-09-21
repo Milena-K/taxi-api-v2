@@ -10,6 +10,7 @@ from rest_framework import (
     status,
     generics,
 )
+from rest_framework import mixins
 from rest_framework.mixins import (
     ListModelMixin,
 )
@@ -65,22 +66,19 @@ channel_layer = (
 # retrieve
 
 
-class UserViewSet(
-    ModelViewSet
-):
+class UserViewSet(ModelViewSet):
     """
     API endpoint for handling user data
     """
-
     queryset = (
-        User.objects.all()
-    )  # TODO: add order_by()
+        User.objects.all().order_by("username")
+    )
     serializer_class = (
         UserSerializer
     )
     permission_classes = [
-        permissions.AllowAny
-    ]  # TODO: change to IsAdminOnly
+        permissions.IsAdminUser
+    ]
 
 
 # Register User
@@ -90,7 +88,6 @@ class RegisterView(
     """
     API endpoint for registering users
     """
-
     queryset = (
         User.objects.all()
     )
@@ -240,9 +237,9 @@ class PassengerViewSet(
             username=request.user.username
         )
         if (
-            int(user.pk)
-            == int(pk)
-        ):  # TODO: or user.is_superuser
+            (int(user.pk)
+            == int(pk)) or user.is_superuser
+        ):
             passenger = Passenger.objects.get(
                 user_id=pk
             )
@@ -281,8 +278,8 @@ class PassengerViewSet(
         )
         if (
             int(user.pk)
-            == int(pk)
-        ):  # TODO: or user.is_superuser
+            == int(pk) or user.is_superuser
+        ):
             passenger = Passenger.objects.get(
                 user_id=pk
             )
@@ -336,8 +333,8 @@ class DriverViewSet(
         DriverSerializer
     )
     permission_classes = [
-        permissions.AllowAny
-    ]  # TODO: change to IsAdminOnly
+        permissions.IsAdminUser
+    ]
 
     def partial_update(
         self, request, pk=None
@@ -352,8 +349,8 @@ class DriverViewSet(
         )
         if (
             int(user.pk)
-            == int(pk)
-        ):  # TODO: or user.is_superuser
+            == int(pk) or user.is_superuser
+        ):
             driver = Driver.objects.get(
                 user_id=pk
             )
@@ -392,8 +389,8 @@ class DriverViewSet(
         )
         if (
             int(user.pk)
-            == int(pk)
-        ):  # TODO: or user.is_superuser
+            == int(pk) or user.is_superuser
+        ):
             driver = Driver.objects.get(
                 user_id=pk
             )

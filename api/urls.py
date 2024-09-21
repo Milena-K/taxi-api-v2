@@ -1,6 +1,7 @@
 from django.urls import (
     include,
     path,
+    re_path,
 )
 from rest_framework import (
     routers,
@@ -35,12 +36,14 @@ router.register(
     views.DriverViewSet,
     basename="drivers",
 )
-# router.register(r'ride-request', rides_views.RideRequestViewSet, basename="ride-request")
-# router.register(r'ride-offer', rides_views.RideOfferViewSet, basename="ride-offer")
-# router.register(r'ride-accepted', rides_views.RideAcceptedViewSet, basename="ride-accepted")
-
+router.register(
+    r"rides",
+    rides_views.RidesViewSet,
+    basename="rides",
+)
 
 urlpatterns = [
+    # re_path('^rides/(?P<ride_uuid>.+)/$', rides_views.RidesViewSet.as_view({'get':'list'})),
     path(
         "",
         include(router.urls),

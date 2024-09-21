@@ -10,8 +10,11 @@ from django.db.models import (
     ObjectDoesNotExist,
 )
 from rest_framework import (
+    mixins,
     status,
+    viewsets,
 )
+from rest_framework import permissions
 from rest_framework.decorators import (
     api_view,
     permission_classes,
@@ -53,8 +56,22 @@ channel_layer = (
     get_channel_layer()
 )
 
-# TODO create GET ride by ride uuid
-# TODO create PATCH ride by ride uuid
+class RidesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+    """
+    A simple ViewSet for viewing, editing and deleting rides.
+    """
+    serializer_class = RideSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        """
+        Optionally filters rides by querystring parameter ride_uuid.
+        """
+        queryset = Ride.objects.all()
+        ride_uuid = self.request.query_params.get('ride_uuid')
+        if ride_uuid is not None:
+            queryset = Ride.objects.filter(ride_uuid=ride_uuid)
+        return queryset
 
 @api_view(["POST"])
 @permission_classes(
