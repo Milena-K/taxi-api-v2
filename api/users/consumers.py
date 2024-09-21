@@ -119,9 +119,15 @@ class DriverConsumer(
         self.send(
             text_data=json.dumps(
                 {
-                    "message": event["message"],
-                    "passenger": event["passenger"],
-                    "ride_uuid": event["ride_uuid"],
+                    "message": event[
+                        "message"
+                    ],
+                    "passenger": event[
+                        "passenger"
+                    ],
+                    "ride_uuid": event[
+                        "ride_uuid"
+                    ],
                 }
             )
         )

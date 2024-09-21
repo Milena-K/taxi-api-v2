@@ -14,7 +14,9 @@ from rest_framework import (
     status,
     viewsets,
 )
-from rest_framework import permissions
+from rest_framework import (
+    permissions,
+)
 from rest_framework.decorators import (
     api_view,
     permission_classes,
@@ -56,22 +58,43 @@ channel_layer = (
     get_channel_layer()
 )
 
-class RidesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+
+class RidesViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+):
     """
     A simple ViewSet for viewing, editing and deleting rides.
     """
-    serializer_class = RideSerializer
-    permission_classes = [permissions.IsAdminUser]
+
+    serializer_class = (
+        RideSerializer
+    )
+    permission_classes = [
+        permissions.IsAdminUser
+    ]
 
     def get_queryset(self):
         """
         Optionally filters rides by querystring parameter ride_uuid.
         """
-        queryset = Ride.objects.all()
-        ride_uuid = self.request.query_params.get('ride_uuid')
-        if ride_uuid is not None:
-            queryset = Ride.objects.filter(ride_uuid=ride_uuid)
+        queryset = (
+            Ride.objects.all()
+        )
+        ride_uuid = self.request.query_params.get(
+            "ride_uuid"
+        )
+        if (
+            ride_uuid
+            is not None
+        ):
+            queryset = Ride.objects.filter(
+                ride_uuid=ride_uuid
+            )
         return queryset
+
 
 @api_view(["POST"])
 @permission_classes(
@@ -309,9 +332,8 @@ def start_ride(request):
         )
     )
     if not (
-        ride_uuid and
-        passenger
-
+        ride_uuid
+        and passenger
     ):
         return Response(
             {
@@ -337,16 +359,16 @@ def start_ride(request):
             ride.status
             == Ride.Status.CREATED
         ):
-            ride.start_time = (
-                datetime.now()
-            )
-            ride.status = (
-                Ride.Status.ACTIVE
-            )
+            ride.start_time = datetime.now()
+            ride.status = Ride.Status.ACTIVE
             ride.save()
             # the driver should periodically send location data to passenger ws
 
-            start_ride_task.delay(passenger, driver, ride_uuid)
+            start_ride_task.delay(
+                passenger,
+                driver,
+                ride_uuid,
+            )
         return Response(
             {
                 "message": "This ride is started."
@@ -384,8 +406,8 @@ def finish_ride(
         )
     )
     if not (
-        ride_uuid and
-        passenger
+        ride_uuid
+        and passenger
     ):
         return Response(
             {
@@ -468,8 +490,8 @@ def cancel_ride(
         )
     )
     if not (
-        ride_uuid and
-        driver_id
+        ride_uuid
+        and driver_id
     ):
         return Response(
             {

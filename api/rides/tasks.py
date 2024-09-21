@@ -22,9 +22,7 @@ def find_driver_for_ride(
     """
     Find a driver for a ride by sending a ride request message.
     """
-    dropoff_time = (
-         "2024-09-19T00:00:00" # TODO: calculate
-    )
+    dropoff_time = "2024-09-19T00:00:00"  # TODO: calculate
     ride_duration = (
         0  # TODO: calculate
     )
@@ -106,6 +104,7 @@ def accept_ride_offer(
         },
     )
 
+
 @shared_task
 def start_ride_task(
     passenger: int,
@@ -130,6 +129,7 @@ def start_ride_task(
         },
     )
 
+
 @shared_task
 def cancel_ride_task(
     passenger: int,
@@ -147,6 +147,7 @@ def cancel_ride_task(
             "ride_uuid": ride_uuid,
         },
     )
+
 
 @shared_task
 def cancel_active_ride_task(
