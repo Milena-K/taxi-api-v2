@@ -13,6 +13,8 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from django_channels_jwt.views import AsgiValidateTokenView
+
 from .users import views
 from .rides import (
     views as rides_views,
@@ -41,24 +43,36 @@ router.register(
     rides_views.RidesViewSet,
     basename="rides",
 )
+router.register(
+    r"ride-ratings",
+    rides_views.RideRatingsViewSet,
+    basename="ride-ratings",
+)
 
 urlpatterns = [
     # re_path('^rides/(?P<ride_uuid>.+)/$', rides_views.RidesViewSet.as_view({'get':'list'})),
+    # path("api/token/", include('django_channels_jwt.urls')),
+    # path("ws_connection/", AsgiValidateTokenView.as_view()),
     path(
         "",
         include(router.urls),
     ),
     path(
         "register/",
-        views.RegisterView.as_view(),
+        views.UserViewSet.as_view({"post": "create"}),
     ),
     path(
         "login/",
-        views.TokenObtainPairView.as_view(),
+        views.LoginView.as_view(),
     ),
     path(
         "profile/",
         views.getProfile,
+    ),
+    path(
+        "rate-ride/",
+        rides_views.rate_ride,
+        name="rate-ride",
     ),
     path(
         "request-ride/",

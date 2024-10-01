@@ -3,6 +3,7 @@ from django.contrib.auth.models import (
     AbstractBaseUser,
     PermissionsMixin,
 )
+from phonenumber_field.modelfields import PhoneNumberField
 
 from .managers import (
     UserManager,
@@ -14,15 +15,15 @@ class User(
     PermissionsMixin,
 ):
     REQUIRED_FIELDS = [
-        "email",
         "password",
     ]
     USERNAME_FIELD = (
         "username"
     )
     objects = UserManager()
-
-    # TODO: add phone number
+    email = models.EmailField(blank=True)
+    date_created = models.DateField(auto_now=True)
+    phone_number = PhoneNumberField(blank=True)
     username = (
         models.CharField(
             max_length=50,
@@ -30,15 +31,12 @@ class User(
             unique=True,
         )
     )
-    email = models.EmailField(
-        blank=False,
-        unique=True,
-    )
     profile_picture = (
         models.CharField(
             blank=True
         )
     )
+    birthday = models.DateField(blank=True, auto_now=True)
     is_staff = (
         models.BooleanField(
             default=False
@@ -51,7 +49,7 @@ class User(
     )
     is_active = models.BooleanField(
         default=True
-    )  # TODO: change later to False, and only True if user confirms email
+    )  # TODO: change later to False, and only True useris confirmed through sms code
 
     def __str__(self):
         return self.username
@@ -88,11 +86,6 @@ class Passenger(models.Model):
         on_delete=models.CASCADE,
         primary_key=True,
         unique=True,
-    )
-    credit_card = (
-        models.CharField(
-            blank=True
-        )
     )
     rides_taken = (
         models.IntegerField(

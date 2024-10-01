@@ -88,7 +88,7 @@ class Ride(models.Model):
             " end_time={},"
             " price={},"
             " ride_duration={},"
-            " dropoff_time={}"
+            " dropoff_time={})"
         ).format(
             self.passenger,
             self.driver,
@@ -104,16 +104,6 @@ class Ride(models.Model):
 
 
 class Rating(models.Model):
-    passenger = models.ForeignKey(
-        Passenger,
-        on_delete=models.CASCADE,
-        blank=False,
-    )  # rated by
-    driver = models.ForeignKey(
-        Driver,
-        on_delete=models.CASCADE,
-        blank=False,
-    )
     ride = models.ForeignKey(
         Ride,
         on_delete=models.CASCADE,
@@ -132,14 +122,10 @@ class Rating(models.Model):
 
     def __str__(self):
         return (
-            "Rating(passenger={},"
-            " driver={},"
-            " ride={}),"
+            "Rating(ride={}),"
             " rating={},"
-            " comment={}"
+            " comment={})"
         ).format(
-            self.passenger,
-            self.driver,
             self.ride,
             self.rating,
             self.comment,

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "api",
+    "phonenumber_field",
 ]
 
 MIDDLEWARE = [
@@ -156,7 +157,6 @@ AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.BasicAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
 }
@@ -177,6 +177,7 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME_LATE_USER": timedelta(
         days=30
     ),
+    "TOKEN_OBTAIN_SERIALIZER": "api.serializers.MyTokenObtainPairSerializer",
 }
 
 AUTHENTICATION_BACKENDS = [
@@ -195,6 +196,7 @@ CACHES = {
         # }
     },
 }
+
 
 CHANNEL_LAYERS = {
     "default": {

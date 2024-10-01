@@ -78,8 +78,8 @@ class PassengerSerializer(
     class Meta:
         model = Passenger
         fields = [
-            "credit_card",
             "user",
+            "rides_taken",
             "user_pk",
         ]
         depth = 1
@@ -191,8 +191,15 @@ class DriverSerializer(
         return instance
 
 
-class ProfileSerializer(
-    serializers.Serializer
+class UserProfileSerializer(
+    serializers.ModelSerializer
 ):
-    rides_taken = serializers.IntegerField()
-    created = serializers.DateTimeField()
+    class Meta:
+        model = User
+        fields = [
+            "username",
+            "password",
+            "phone_number",
+            "profile_picture",
+            "birthday"
+        ]

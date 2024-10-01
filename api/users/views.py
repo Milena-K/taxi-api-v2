@@ -46,10 +46,10 @@ from django.core.exceptions import (
 
 from .serializers import (
     UserSerializer,
-    MyTokenObtainPairSerializer,
     PassengerSerializer,
     DriverSerializer,
 )
+from ..serializers import MyTokenObtainPairSerializer
 from .models import (
     Passenger,
     Driver,
@@ -60,12 +60,9 @@ channel_layer = (
     get_channel_layer()
 )
 
-# TODO:
-# user login
-# signup
-# verify
-# update profile details
-# retrieve
+
+class LoginView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 
 class UserViewSet(
@@ -74,35 +71,27 @@ class UserViewSet(
     """
     API endpoint for handling user data
     """
-
     queryset = User.objects.all().order_by(
         "username"
     )
     serializer_class = (
         UserSerializer
     )
-    permission_classes = [
-        permissions.IsAdminUser
-    ]
 
-
-# Register User
-class RegisterView(
-    generics.CreateAPIView
-):
-    """
-    API endpoint for registering users
-    """
-
-    queryset = (
-        User.objects.all()
-    )
-    permission_classes = (
-        permissions.AllowAny,
-    )
-    serializer_class = (
-        UserSerializer
-    )
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == "create":
+            permission_classes = [
+                permissions.AllowAny
+            ]
+        else:
+            permission_classes = [
+                permissions.IsAdminUser
+            ]
+        return [
+            permission()
+            for permission in permission_classes
+        ]
 
 
 @api_view(["GET"])

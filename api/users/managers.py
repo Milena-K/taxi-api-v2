@@ -13,7 +13,6 @@ class UserManager(
         self,
         username,
         password,
-        email,
         profile_picture,
         **extra_fields,
     ):
@@ -25,20 +24,12 @@ class UserManager(
             raise ValueError(
                 "A password for the user must be set."
             )
-        if not email:
-            raise ValueError(
-                "An EMAIL for the user must be set."
-            )
 
-        email = self.normalize_email(
-            email
-        )
         user = self.model(
-            email=email,
             username=username,
             profile_picture=profile_picture,
         )
-        # TODO: change user to be active only when email is confirmed
+        # TODO: change user to be active only when phone number is confirmed
         extra_fields.setdefault(
             "is_active", True
         )
@@ -51,19 +42,14 @@ class UserManager(
     def create_superuser(
         self,
         username,
-        email,
         password,
         **extra_fields,
     ):
         """
         Create and save a SuperUser with the given email and password.
         """
-        email = self.normalize_email(
-            email
-        )
         superuser = self.model(
             username=username,
-            email=email,
         )
         superuser.is_staff = (
             True
@@ -71,6 +57,7 @@ class UserManager(
         superuser.is_superuser = True
         superuser.is_active = True
 
+        # TODO: the superuser should have a work email for contact
         superuser.set_password(
             password
         )

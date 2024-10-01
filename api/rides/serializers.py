@@ -54,32 +54,10 @@ class RideSerializer(
             "price",
         ]
 
-    # def create(
-    #     self,
-    #     instance,
-    #     validated_data,
-    # ):
-    #     instance.passenger = validated_data.passenger
-    #     instance.driver = validated_data.driver
-    #     instance.ride_uuid = validated_data.ride_uuid
-    #     instance.starting_location = validated_data.starting_location
-    #     instance.destination = validated_data.destination
-    #     instance.start_time = validated_data.start_time
-    #     instance.end_time = validated_data.end_time
-    #     instance.ride_duration = validated_data.ride_duration
-    #     instance.dropoff_time = validated_data.driver
-    #     instance.price = validated_data.price
-
 
 class RatingSerializer(
     serializers.HyperlinkedModelSerializer
 ):
-    passenger = serializers.PrimaryKeyRelatedField(
-        queryset=Passenger.objects.all()
-    )
-    driver = serializers.PrimaryKeyRelatedField(
-        queryset=Driver.objects.all()
-    )
     ride = serializers.PrimaryKeyRelatedField(
         queryset=Ride.objects.all()
     )
@@ -87,6 +65,7 @@ class RatingSerializer(
     class Meta:
         model = Rating
         fields = [
+            "ride",
             "rating",
             "comment",
         ]
