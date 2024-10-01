@@ -49,7 +49,9 @@ from .serializers import (
     PassengerSerializer,
     DriverSerializer,
 )
-from ..serializers import MyTokenObtainPairSerializer
+from ..serializers import (
+    MyTokenObtainPairSerializer,
+)
 from .models import (
     Passenger,
     Driver,
@@ -61,7 +63,9 @@ channel_layer = (
 )
 
 
-class LoginView(TokenObtainPairView):
+class LoginView(
+    TokenObtainPairView
+):
     serializer_class = MyTokenObtainPairSerializer
 
 
@@ -71,6 +75,7 @@ class UserViewSet(
     """
     API endpoint for handling user data
     """
+
     queryset = User.objects.all().order_by(
         "username"
     )
@@ -80,7 +85,10 @@ class UserViewSet(
 
     def get_permissions(self):
         permission_classes = []
-        if self.action == "create":
+        if (
+            self.action
+            == "create"
+        ):
             permission_classes = [
                 permissions.AllowAny
             ]

@@ -13,7 +13,9 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from django_channels_jwt.views import AsgiValidateTokenView
+from django_channels_jwt.views import (
+    AsgiValidateTokenView,
+)
 
 from .users import views
 from .rides import (
@@ -59,7 +61,9 @@ urlpatterns = [
     ),
     path(
         "register/",
-        views.UserViewSet.as_view({"post": "create"}),
+        views.UserViewSet.as_view(
+            {"post": "create"}
+        ),
     ),
     path(
         "login/",

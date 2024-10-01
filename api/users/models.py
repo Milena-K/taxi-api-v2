@@ -3,7 +3,9 @@ from django.contrib.auth.models import (
     AbstractBaseUser,
     PermissionsMixin,
 )
-from phonenumber_field.modelfields import PhoneNumberField
+from phonenumber_field.modelfields import (
+    PhoneNumberField,
+)
 
 from .managers import (
     UserManager,
@@ -21,9 +23,19 @@ class User(
         "username"
     )
     objects = UserManager()
-    email = models.EmailField(blank=True)
-    date_created = models.DateField(auto_now=True)
-    phone_number = PhoneNumberField(blank=True)
+    email = models.EmailField(
+        blank=True
+    )
+    date_created = (
+        models.DateField(
+            auto_now=True
+        )
+    )
+    phone_number = (
+        PhoneNumberField(
+            blank=True
+        )
+    )
     username = (
         models.CharField(
             max_length=50,
@@ -36,7 +48,12 @@ class User(
             blank=True
         )
     )
-    birthday = models.DateField(blank=True, auto_now=True)
+    birthday = (
+        models.DateField(
+            blank=True,
+            auto_now=True,
+        )
+    )
     is_staff = (
         models.BooleanField(
             default=False

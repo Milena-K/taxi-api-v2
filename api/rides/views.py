@@ -28,8 +28,12 @@ from rest_framework.response import (
     Response,
 )
 from datetime import datetime
-from importlib import import_module
-from django.conf import settings
+from importlib import (
+    import_module,
+)
+from django.conf import (
+    settings,
+)
 
 from ..users.models import (
     Driver,
@@ -63,12 +67,15 @@ channel_layer = (
 
 
 class RideRatingsViewSet(
-        viewsets.ModelViewSet
+    viewsets.ModelViewSet
 ):
     """
     A simple ViewSet for viewing, editing and deleting ride ratings.
     """
-    queryset = Rating.objects.all()
+
+    queryset = (
+        Rating.objects.all()
+    )
 
     serializer_class = (
         RatingSerializer
@@ -83,7 +90,7 @@ class RideRatingsViewSet(
             "partial_update",
         ]:
             permission_classes = [
-                permissions.IsAdminUser # TODO or is owner of rating
+                permissions.IsAdminUser  # TODO or is owner of rating
             ]
         else:
             permission_classes = [
@@ -93,6 +100,7 @@ class RideRatingsViewSet(
             permission()
             for permission in permission_classes
         ]
+
 
 class RidesViewSet(
     viewsets.GenericViewSet,
@@ -152,7 +160,9 @@ def request_ride(request):
     )  # expects (long, lat)
     ride_uuid = uuid.uuid4()
     print(request.session)
-    print(request.session.keys())
+    print(
+        request.session.keys()
+    )
     if not (
         starting_location
         and destination
@@ -603,6 +613,7 @@ def cancel_ride(
             status.HTTP_404_NOT_FOUND,
         )
 
+
 @api_view(["POST"])
 @permission_classes(
     [
@@ -611,24 +622,30 @@ def cancel_ride(
     ]
 )
 def rate_ride(request):
-    passenger = request.user.pk
-    ride_uuid = request.data.get("ride_uuid")
-    if not (
-        ride_uuid
-    ):
+    passenger = (
+        request.user.pk
+    )
+    ride_uuid = (
+        request.data.get(
+            "ride_uuid"
+        )
+    )
+    if not (ride_uuid):
         return Response(
             {
                 "message": "ride_uuid is required."
             },
-            status.HTTP_400_BAD_REQUEST
+            status.HTTP_400_BAD_REQUEST,
         )
     try:
-        ride = Ride.objects.get(ride_uuid=ride_uuid)
+        ride = Ride.objects.get(
+            ride_uuid=ride_uuid
+        )
         serializer = RatingSerializer(
             data={
                 "ride": ride.pk,
                 "rating": 2.0,
-                "comment": "It aint."
+                "comment": "It aint.",
             }
         )
         if serializer.is_valid():
@@ -637,11 +654,11 @@ def rate_ride(request):
                 {
                     "message": "data is valid"
                 },
-                status.HTTP_200_OK
+                status.HTTP_200_OK,
             )
         return Response(
             serializer.errors,
-            status.HTTP_400_BAD_REQUEST
+            status.HTTP_400_BAD_REQUEST,
         )
 
     except ObjectDoesNotExist:

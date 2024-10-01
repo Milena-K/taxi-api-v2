@@ -201,5 +201,5 @@ class UserProfileSerializer(
             "password",
             "phone_number",
             "profile_picture",
-            "birthday"
+            "birthday",
         ]

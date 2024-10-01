@@ -9,7 +9,9 @@ from channels.routing import (
 from channels.auth import (
     AuthMiddlewareStack,
 )
-from .middleware import TokenAuthMiddleware
+from .middleware import (
+    TokenAuthMiddleware,
+)
 from . import routing
 
 os.environ.setdefault(
@@ -23,7 +25,6 @@ application = ProtocolTypeRouter(
         "websocket": TokenAuthMiddleware(
             AuthMiddlewareStack(
                 URLRouter(
-
                     routing.websocket_urlpatterns
                 )
             )
