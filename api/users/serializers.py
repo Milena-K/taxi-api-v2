@@ -31,6 +31,8 @@ class UserSerializer(
             "username",
             "email",
             "profile_picture",
+            "phone_number",
+            "birthday",
             "password",
             "pk",
         ]
@@ -140,7 +142,6 @@ class DriverSerializer(
         fields = [
             "user",
             "car_type",
-            "rating",
             "user_pk",
         ]
         depth = 1

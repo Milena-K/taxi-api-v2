@@ -66,7 +66,7 @@ class User(
     )
     is_active = models.BooleanField(
         default=True
-    )  # TODO: change later to False, and only True useris confirmed through sms code
+    )  # TODO: change later to False, and only True if user is confirmed through sms code
 
     def __str__(self):
         return self.username

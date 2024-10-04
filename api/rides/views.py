@@ -28,17 +28,8 @@ from rest_framework.response import (
     Response,
 )
 from datetime import datetime
-from importlib import (
-    import_module,
-)
-from django.conf import (
-    settings,
-)
 
-from ..users.models import (
-    Driver,
-    Passenger,
-)
+
 from ..rides.models import (
     Ride,
     Rating,
@@ -88,9 +79,10 @@ class RideRatingsViewSet(
         if self.action in [
             "update",
             "partial_update",
+            "destroy",
         ]:
             permission_classes = [
-                permissions.IsAdminUser  # TODO or is owner of rating
+                permissions.IsAdminUser
             ]
         else:
             permission_classes = [
