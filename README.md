@@ -1,10 +1,17 @@
 # taxi-api-v2
 
-Create and run the container for postgres
+### You will need env variables for:
+- SECRET_KEY
+- DB_USER
+- DB_PASSWORD
+- DB_HOST
+- DB_PORT
 
-docker run --name some-postgres -p 5432:5432 \
--e POSTGRES_USER=taxiadmin -e POSTGRES_DB=taxidb -e POSTGRES_PASSWORD=taxi -d postgres
+### Create and run the container for postgres
 
-Create and run the container for redis
+"""docker run --name taxi-postgres -p 5432:5432 \
+-e POSTGRES_USER=taxiadmin -e POSTGRES_DB=taxidb -e POSTGRES_PASSWORD=taxi -d postgres"""
 
-docker run --name some-redis -p 6379:6379 -d redis
+### Create and run the container for redis
+
+"""docker run --name taxi-redis -p 6379:6379 -d redis"""

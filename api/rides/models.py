@@ -130,3 +130,4 @@ class Rating(models.Model):
             self.rating,
             self.comment,
         )
+
