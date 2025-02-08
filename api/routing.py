@@ -1,13 +1,7 @@
-from django.urls import (
-    path,
-    re_path,
-)
-from .rides import (
-    consumers as rides_consumers,
-)
-from .users import (
-    consumers as users_consumers,
-)
+from django.urls import path, re_path
+
+from .rides import consumers as rides_consumers
+from .users import consumers as users_consumers
 
 websocket_urlpatterns = [
     path(

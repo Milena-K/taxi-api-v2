@@ -1,27 +1,11 @@
-from django.urls import (
-    include,
-    path,
-    re_path,
-)
-from rest_framework import (
-    routers,
-)
-from django.contrib import (
-    admin,
-)
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
+from django.contrib import admin
+from django.urls import include, path
+from rest_framework import routers
 
+from .rides import views as rides_views
 from .users import views
-from .rides import (
-    views as rides_views,
-)
 
-router = (
-    routers.DefaultRouter()
-)
+router = routers.DefaultRouter()
 router.register(
     r"users",
     views.UserViewSet,
@@ -54,32 +38,23 @@ router.register(
 )
 
 urlpatterns = [
-    # re_path('^rides/(?P<ride_uuid>.+)/$', rides_views.RidesViewSet.as_view({'get':'list'})),
+    # re_path('^rides/(?P<ride_uuid>.+)/$',
+    # rides_views.RidesViewSet.as_view({'get':'list'})),
     path(
         "",
         include(router.urls),
     ),
     path(
         "profile/<int:pk>/",
-        views.ProfileViewSet.as_view(
-            {
-                "patch": "update"
-            }
-        ),
+        views.ProfileViewSet.as_view({"patch": "update"}),
     ),
     path(
         "profile/<int:pk>/",
-        views.ProfileViewSet.as_view(
-            {
-                "get": "retrieve"
-            }
-        ),
+        views.ProfileViewSet.as_view({"get": "retrieve"}),
     ),
     path(
         "register/",
-        views.UserViewSet.as_view(
-            {"post": "create"}
-        ),
+        views.UserViewSet.as_view({"post": "create"}),
     ),
     path(
         "login/",

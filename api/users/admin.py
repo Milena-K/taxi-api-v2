@@ -1,9 +1,5 @@
-from django.contrib import (
-    admin,
-)
+from django.contrib import admin
 
 
-class AdminUser(
-    admin.ModelAdmin
-):
+class AdminUser(admin.ModelAdmin):
     pass

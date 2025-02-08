@@ -1,76 +1,38 @@
 import uuid
-
-from channels.layers import (
-    get_channel_layer,
-)
-from django.contrib.auth import (
-    get_user_model,
-)
-from django.db.models import (
-    ObjectDoesNotExist,
-)
-from rest_framework import (
-    mixins,
-    status,
-    viewsets,
-)
-from rest_framework import (
-    permissions,
-)
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-)
-from rest_framework.permissions import (
-    IsAuthenticated,
-)
-from rest_framework.response import (
-    Response,
-)
 from datetime import datetime
 
+from channels.layers import get_channel_layer
+from django.contrib.auth import get_user_model
+from django.db.models import ObjectDoesNotExist
+from rest_framework import mixins, permissions, status, viewsets
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from ..rides.models import (
-    Ride,
-    Rating,
-)
-from ..rides.serializers import (
-    RatingSerializer,
-    RideSerializer,
-)
-from ..rides.permissions import (
-    IsPassenger,
-    IsDriver,
-)
+from ..rides.models import Rating, Ride
+from ..rides.permissions import IsDriver, IsPassenger
+from ..rides.serializers import RatingSerializer, RideSerializer
 from .tasks import (
     accept_ride_offer,
+    cancel_active_ride_task,
+    cancel_ride_task,
     find_driver_for_ride,
     send_ride_offer,
     start_ride_task,
-    cancel_ride_task,
-    cancel_active_ride_task,
 )
 
 User = get_user_model()
-channel_layer = (
-    get_channel_layer()
-)
+channel_layer = get_channel_layer()
 
 
-class RideRatingsViewSet(
-    viewsets.ModelViewSet
-):
+class RideRatingsViewSet(viewsets.ModelViewSet):
     """
     A simple ViewSet for viewing, editing and deleting ride ratings.
     """
 
-    queryset = (
-        Rating.objects.all()
-    )
+    queryset = Rating.objects.all()
 
-    serializer_class = (
-        RatingSerializer
-    )
+    serializer_class = RatingSerializer
 
     def get_permissions(self):
         """
@@ -81,17 +43,10 @@ class RideRatingsViewSet(
             "partial_update",
             "destroy",
         ]:
-            permission_classes = [
-                permissions.IsAdminUser
-            ]
+            permission_classes = [permissions.IsAdminUser]
         else:
-            permission_classes = [
-                permissions.AllowAny
-            ]
-        return [
-            permission()
-            for permission in permission_classes
-        ]
+            permission_classes = [permissions.AllowAny]
+        return [permission() for permission in permission_classes]
 
 
 class RidesViewSet(
@@ -104,30 +59,17 @@ class RidesViewSet(
     A simple ViewSet for viewing, editing and deleting rides.
     """
 
-    serializer_class = (
-        RideSerializer
-    )
-    permission_classes = [
-        permissions.IsAdminUser
-    ]
+    serializer_class = RideSerializer
+    permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
         """
         Optionally filters rides by querystring parameter ride_uuid.
         """
-        queryset = (
-            Ride.objects.all()
-        )
-        ride_uuid = self.request.query_params.get(
-            "ride_uuid"
-        )
-        if (
-            ride_uuid
-            is not None
-        ):
-            queryset = Ride.objects.filter(
-                ride_uuid=ride_uuid
-            )
+        queryset = Ride.objects.all()
+        ride_uuid = self.request.query_params.get("ride_uuid")
+        if ride_uuid is not None:
+            queryset = Ride.objects.filter(ride_uuid=ride_uuid)
         return queryset
 
 
@@ -139,30 +81,15 @@ class RidesViewSet(
     ]
 )
 def request_ride(request):
-    passenger_id = (
-        request.user.pk
-    )
-    starting_location = request.data.get(
-        "starting_location"
-    )  # expects (long, lat)
-    destination = (
-        request.data.get(
-            "destination"
-        )
-    )  # expects (long, lat)
+    passenger_id = request.user.pk
+    starting_location = request.data.get("starting_location")  # expects (long, lat)
+    destination = request.data.get("destination")  # expects (long, lat)
     ride_uuid = uuid.uuid4()
     print(request.session)
-    print(
-        request.session.keys()
-    )
-    if not (
-        starting_location
-        and destination
-    ):
+    print(request.session.keys())
+    if not (starting_location and destination):
         return Response(
-            {
-                "message": "starting_location and destination are required."
-            },
+            {"message": "starting_location and destination are required."},
             status.HTTP_400_BAD_REQUEST,
         )
     find_driver_for_ride.delay(
@@ -186,43 +113,23 @@ def request_ride(request):
 )
 def offer_ride(request):
     driver = request.user.pk
-    passenger_id = (
-        request.data.get(
-            "passenger_id"
-        )
-    )
+    passenger_id = request.data.get("passenger_id")
     # TODO the price should be calculated on the server
-    price = request.data.get(
-        "price"
-    )
-    ride_uuid = (
-        request.data.get(
-            "ride_uuid"
-        )
-    )
+    price = request.data.get("price")
+    ride_uuid = request.data.get("ride_uuid")
     try:
-        ride = Ride.objects.get(
-            ride_uuid=ride_uuid
-        )
+        ride = Ride.objects.get(ride_uuid=ride_uuid)
         if ride:
             return Response(
-                {
-                    "message": "This ride already exists, try another ride_uuid."
-                },
+                {"message": "This ride already exists, try another ride_uuid."},
                 status.HTTP_400_BAD_REQUEST,
             )
     except ObjectDoesNotExist:
         dropoff_time = 0  # TODO calculate
         ride_duration = 0  # TODO calculate
-        if not (
-            price
-            and ride_uuid
-            and passenger_id
-        ):
+        if not (price and ride_uuid and passenger_id):
             return Response(
-                {
-                    "message": "price, ride_uuid and passenger_id are required."
-                },
+                {"message": "price, ride_uuid and passenger_id are required."},
                 status.HTTP_400_BAD_REQUEST,
             )
         send_ride_offer.delay(
@@ -248,45 +155,15 @@ def offer_ride(request):
     ]
 )
 def accept_ride(request):
-    passenger_id = (
-        request.user.pk
-    )
-    driver_id = (
-        request.data.get(
-            "driver_id"
-        )
-    )
-    starting_location = request.data.get(
-        "starting_location"
-    )  # expects (long, lat)
-    destination = (
-        request.data.get(
-            "destination"
-        )
-    )  # expects (long, lat)
-    price = request.data.get(
-        "price"
-    )
-    ride_uuid = (
-        request.data.get(
-            "ride_uuid"
-        )
-    )
-    dropoff_time = (
-        request.data.get(
-            "dropoff_time"
-        )
-    )
-    start_time = (
-        request.data.get(
-            "start_time"
-        )
-    )
-    ride_duration = (
-        request.data.get(
-            "ride_duration"
-        )
-    )
+    passenger_id = request.user.pk
+    driver_id = request.data.get("driver_id")
+    starting_location = request.data.get("starting_location")  # expects (long, lat)
+    destination = request.data.get("destination")  # expects (long, lat)
+    price = request.data.get("price")
+    ride_uuid = request.data.get("ride_uuid")
+    dropoff_time = request.data.get("dropoff_time")
+    start_time = request.data.get("start_time")
+    ride_duration = request.data.get("ride_duration")
     if not (
         driver_id
         and starting_location
@@ -298,19 +175,17 @@ def accept_ride(request):
     ):
         return Response(
             {
-                "message": "driver_id, starting_location, destination, dropoff_time, ride_duration, price and ride_uuid are required."
+                "message": "driver_id, starting_location,\
+                destination, dropoff_time, ride_duration,\
+                price and ride_uuid are required."
             },
             status.HTTP_400_BAD_REQUEST,
         )
 
     try:
-        Ride.objects.get(
-            ride_uuid=ride_uuid
-        )
+        Ride.objects.get(ride_uuid=ride_uuid)
         return Response(
-            {
-                "message": "This ride already exists."
-            },
+            {"message": "This ride already exists."},
             status.HTTP_400_BAD_REQUEST,
         )
     except ObjectDoesNotExist:
@@ -360,44 +235,21 @@ def accept_ride(request):
 )
 def start_ride(request):
     driver = request.user.pk
-    passenger = (
-        request.data.get(
-            "passenger"
-        )
-    )
-    ride_uuid = (
-        request.data.get(
-            "ride_uuid"
-        )
-    )
-    if not (
-        ride_uuid
-        and passenger
-    ):
+    passenger = request.data.get("passenger")
+    ride_uuid = request.data.get("ride_uuid")
+    if not (ride_uuid and passenger):
         return Response(
-            {
-                "message": "ride_uuid and passenger are required."
-            },
+            {"message": "ride_uuid and passenger are required."},
             status.HTTP_400_BAD_REQUEST,
         )
     try:
-        ride = Ride.objects.get(
-            ride_uuid=ride_uuid
-        )
-        if (
-            ride.status
-            == Ride.Status.COMPLETED
-        ):
+        ride = Ride.objects.get(ride_uuid=ride_uuid)
+        if ride.status == Ride.Status.COMPLETED:
             return Response(
-                {
-                    "message": "This ride is completed."
-                },
+                {"message": "This ride is completed."},
                 status.HTTP_400_BAD_REQUEST,
             )
-        elif (
-            ride.status
-            == Ride.Status.CREATED
-        ):
+        elif ride.status == Ride.Status.CREATED:
             ride.start_time = datetime.now()
             ride.status = Ride.Status.ACTIVE
             ride.save()
@@ -409,16 +261,12 @@ def start_ride(request):
                 ride_uuid,
             )
         return Response(
-            {
-                "message": "This ride is started."
-            },
+            {"message": "This ride is started."},
             status.HTTP_200_OK,
         )
     except ObjectDoesNotExist:
         return Response(
-            {
-                "message": "No ride with this ride_uuid was found."
-            },
+            {"message": "No ride with this ride_uuid was found."},
             status.HTTP_400_BAD_REQUEST,
         )
 
@@ -433,48 +281,22 @@ def start_ride(request):
 def finish_ride(
     request,
 ):  # successfull canceling from driver
-    passenger = (
-        request.data.get(
-            "passenger"
-        )
-    )
+    passenger = request.data.get("passenger")
     driver = request.user.pk
-    ride_uuid = (
-        request.data.get(
-            "ride_uuid"
-        )
-    )
-    if not (
-        ride_uuid
-        and passenger
-    ):
+    ride_uuid = request.data.get("ride_uuid")
+    if not (ride_uuid and passenger):
         return Response(
-            {
-                "message": "ride_uuid and passenger are required."
-            },
+            {"message": "ride_uuid and passenger are required."},
             status.HTTP_400_BAD_REQUEST,
         )
     try:
-        ride = Ride.objects.get(
-            ride_uuid=ride_uuid
-        )
-        if (
-            ride.status
-            == Ride.Status.ACTIVE
-        ):
-            ride.end_time = (
-                datetime.now()
-            )
+        ride = Ride.objects.get(ride_uuid=ride_uuid)
+        if ride.status == Ride.Status.ACTIVE:
+            ride.end_time = datetime.now()
             ride.status = Ride.Status.COMPLETED
             # calculate price: curernt_time - start_time * 7 (per minute)
             time_now = datetime.now().astimezone()
-            price = (
-                (
-                    time_now
-                    - ride.start_time
-                ).seconds
-                / 60
-            ) * 7
+            price = ((time_now - ride.start_time).seconds / 60) * 7
             ride.price = price
             ride.save()
             # send message to passenger the ammount owned
@@ -485,22 +307,16 @@ def finish_ride(
                 ride_uuid,
             )
             return Response(
-                {
-                    "message": "This ride has completed."
-                },
+                {"message": "This ride has completed."},
                 status.HTTP_200_OK,
             )
         return Response(
-            {
-                "message": "This ride is not active."
-            },
+            {"message": "This ride is not active."},
             status.HTTP_400_BAD_REQUEST,
         )
     except ObjectDoesNotExist:
         return Response(
-            {
-                "message": "Can't find the ride you are looking for"
-            },
+            {"message": "Can't find the ride you are looking for"},
             status.HTTP_404_NOT_FOUND,
         )
 
@@ -515,37 +331,17 @@ def finish_ride(
 def cancel_ride(
     request,
 ):  # the passenger changes their mind
-    passenger_id = (
-        request.user.pk
-    )
-    driver_id = (
-        request.data.get(
-            "driver_id"
-        )
-    )
-    ride_uuid = (
-        request.data.get(
-            "ride_uuid"
-        )
-    )
-    if not (
-        ride_uuid
-        and driver_id
-    ):
+    passenger_id = request.user.pk
+    driver_id = request.data.get("driver_id")
+    ride_uuid = request.data.get("ride_uuid")
+    if not (ride_uuid and driver_id):
         return Response(
-            {
-                "message": "ride_uuid and driver_id are required."
-            },
+            {"message": "ride_uuid and driver_id are required."},
             status.HTTP_400_BAD_REQUEST,
         )
     try:
-        ride = Ride.objects.get(
-            ride_uuid=ride_uuid
-        )
-        if (
-            ride.status
-            == Ride.Status.CREATED
-        ):  # if ride hasn't started yet
+        ride = Ride.objects.get(ride_uuid=ride_uuid)
+        if ride.status == Ride.Status.CREATED:  # if ride hasn't started yet
             # send direct message to driver that the ride is canceled
             ride.status = Ride.Status.CANCELED
             ride.save()
@@ -560,21 +356,12 @@ def cancel_ride(
                 },
                 status.HTTP_200_OK,
             )
-        elif (
-            ride.status
-            == Ride.Status.ACTIVE
-        ):
+        elif ride.status == Ride.Status.ACTIVE:
             # calculate price: curernt_time - start_time * 7 (per minute)
             # send message to passenger the ammount owned
             time_now = datetime.now().astimezone()
             ride.status = Ride.Status.CANCELED
-            price = (
-                (
-                    time_now
-                    - ride.start_time
-                ).seconds
-                / 60
-            ) * 7
+            price = ((time_now - ride.start_time).seconds / 60) * 7
             ride.price = price
             ride.save()
             cancel_active_ride_task.delay(
@@ -599,9 +386,7 @@ def cancel_ride(
 
     except ObjectDoesNotExist:
         return Response(
-            {
-                "message": "Can't find the ride you are looking for"
-            },
+            {"message": "Can't find the ride you are looking for"},
             status.HTTP_404_NOT_FOUND,
         )
 
@@ -614,25 +399,14 @@ def cancel_ride(
     ]
 )
 def rate_ride(request):
-    passenger = (
-        request.user.pk
-    )
-    ride_uuid = (
-        request.data.get(
-            "ride_uuid"
-        )
-    )
+    ride_uuid = request.data.get("ride_uuid")
     if not (ride_uuid):
         return Response(
-            {
-                "message": "ride_uuid is required."
-            },
+            {"message": "ride_uuid is required."},
             status.HTTP_400_BAD_REQUEST,
         )
     try:
-        ride = Ride.objects.get(
-            ride_uuid=ride_uuid
-        )
+        ride = Ride.objects.get(ride_uuid=ride_uuid)
         serializer = RatingSerializer(
             data={
                 "ride": ride.pk,
@@ -643,9 +417,7 @@ def rate_ride(request):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {
-                    "message": "data is valid"
-                },
+                {"message": "data is valid"},
                 status.HTTP_200_OK,
             )
         return Response(
@@ -655,8 +427,6 @@ def rate_ride(request):
 
     except ObjectDoesNotExist:
         return Response(
-            {
-                "message": "Can't find the ride you are looking for"
-            },
+            {"message": "Can't find the ride you are looking for"},
             status.HTTP_404_NOT_FOUND,
         )

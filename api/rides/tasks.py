@@ -1,15 +1,10 @@
-from channels.layers import (
-    get_channel_layer,
-)
-from asgiref.sync import (
-    async_to_sync,
-)
-from celery import shared_task
 import uuid
 
-channel_layer = (
-    get_channel_layer()
-)
+from asgiref.sync import async_to_sync
+from celery import shared_task
+from channels.layers import get_channel_layer
+
+channel_layer = get_channel_layer()
 
 
 @shared_task
@@ -23,13 +18,9 @@ def find_driver_for_ride(
     Find a driver for a ride by sending a ride request message.
     """
     dropoff_time = "2024-09-19T00:00:00"  # TODO: calculate
-    ride_duration = (
-        0  # TODO: calculate
-    )
+    ride_duration = 0  # TODO: calculate
     # TODO should i calculate the price here as well
-    async_to_sync(
-        channel_layer.group_send
-    )(
+    async_to_sync(channel_layer.group_send)(
         "requests_group",
         {
             "type": "new_passenger_request",
@@ -38,9 +29,7 @@ def find_driver_for_ride(
             "destination": destination,
             "dropoff_time": dropoff_time,
             "ride_duration": ride_duration,
-            "ride_uuid": str(
-                ride_uuid
-            ),
+            "ride_uuid": str(ride_uuid),
         },
     )
 
@@ -54,9 +43,7 @@ def send_ride_offer(
     ride_uuid: uuid.UUID,
     passenger_id: int,
 ):
-    async_to_sync(
-        channel_layer.group_send
-    )(
+    async_to_sync(channel_layer.group_send)(
         f"passenger_{passenger_id}",
         {
             "type": "new_driver_offer",
@@ -64,9 +51,7 @@ def send_ride_offer(
             "price": price,
             "dropoff_time": dropoff_time,
             "ride_duration": ride_duration,
-            "ride_uuid": str(
-                ride_uuid
-            ),
+            "ride_uuid": str(ride_uuid),
         },
     )
 
@@ -85,9 +70,7 @@ def accept_ride_offer(
     """
     Send direct message to the chosen driver that the ride is accepted
     """
-    async_to_sync(
-        channel_layer.group_send
-    )(
+    async_to_sync(channel_layer.group_send)(
         f"driver_{driver_id}",
         {
             "type": "ride_accepted",
@@ -98,9 +81,7 @@ def accept_ride_offer(
             "price": price,
             "dropoff_time": dropoff_time,
             "ride_duration": ride_duration,
-            "ride_uuid": str(
-                ride_uuid
-            ),
+            "ride_uuid": str(ride_uuid),
         },
     )
 
@@ -114,18 +95,14 @@ def start_ride_task(
     """
     Send a message as a passenger or driver that a ride was canceled
     """
-    async_to_sync(
-        channel_layer.group_send
-    )(
+    async_to_sync(channel_layer.group_send)(
         f"passenger_{passenger}",
         {
             "type": "start_ride",
             "message": "Ride started!",
             "passenger": passenger,
             "driver": driver,
-            "ride_uuid": str(
-                ride_uuid
-            ),
+            "ride_uuid": str(ride_uuid),
         },
     )
 
@@ -136,9 +113,7 @@ def cancel_ride_task(
     driver_id: int,
     ride_uuid: uuid.UUID,
 ):
-    async_to_sync(
-        channel_layer.group_send
-    )(
+    async_to_sync(channel_layer.group_send)(
         f"driver_{driver_id}",
         {
             "type": "ride_canceled_by_passenger",
@@ -159,9 +134,7 @@ def cancel_active_ride_task(
     """
     Send a message as a passenger or driver that a ride was canceled
     """
-    async_to_sync(
-        channel_layer.group_send
-    )(
+    async_to_sync(channel_layer.group_send)(
         f"passenger_{passenger}",
         {
             "type": "cancel_ride",
@@ -169,8 +142,6 @@ def cancel_active_ride_task(
             "passenger": passenger,
             "driver": driver,
             "price": price,
-            "ride_uuid": str(
-                ride_uuid
-            ),
+            "ride_uuid": str(ride_uuid),
         },
     )

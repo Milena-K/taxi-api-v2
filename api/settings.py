@@ -1,35 +1,25 @@
-from pathlib import Path
-from dotenv import load_dotenv
-from datetime import timedelta
 import os
+from datetime import timedelta
+from pathlib import Path
 
+from dotenv import load_dotenv
 
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parent.parent
-)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "SECRET_KEY"
-)
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (
-    True  # TODO: change later
-)
+DEBUG = True  # TODO: change later
 
-ALLOWED_HOSTS: list[
-    str
-] = []  # TODO: change later, when not DEBUG = True
+ALLOWED_HOSTS: list[str] = []  # TODO: change later, when not DEBUG = True
 
 
 # Application definition
@@ -79,9 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = (
-    "api.wsgi.application"
-)
+WSGI_APPLICATION = "api.wsgi.application"
 
 
 # Database
@@ -90,21 +78,11 @@ WSGI_APPLICATION = (
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv(
-            "DB_NAME"
-        ),
-        "USER": os.getenv(
-            "DB_USER"
-        ),
-        "PASSWORD": os.getenv(
-            "DB_PASSWORD"
-        ),
-        "HOST": os.getenv(
-            "DB_HOST"
-        ),
-        "PORT": os.getenv(
-            "DB_PORT"
-        ),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     },
     "test": {
         "NAME": "test_db",
@@ -116,7 +94,8 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation.\
+        UserAttributeSimilarityValidator",
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -161,21 +140,11 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=60
-    ),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(
-        days=1
-    ),
-    "SLIDING_TOKEN_LIFETIME": timedelta(
-        days=30
-    ),
-    "SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER": timedelta(
-        days=1
-    ),
-    "SLIDING_TOKEN_LIFETIME_LATE_USER": timedelta(
-        days=30
-    ),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+    "SLIDING_TOKEN_LIFETIME": timedelta(days=30),
+    "SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER": timedelta(days=1),
+    "SLIDING_TOKEN_LIFETIME_LATE_USER": timedelta(days=30),
     "TOKEN_OBTAIN_SERIALIZER": "api.serializers.MyTokenObtainPairSerializer",
 }
 
@@ -211,14 +180,8 @@ CHANNEL_LAYERS = {
     },
 }
 
-ASGI_APPLICATION = (
-    "api.asgi.application"
-)
+ASGI_APPLICATION = "api.asgi.application"
 
 # TODO: replace these URLs with the production locations of each service.
-CELERY_BROKER_URL = (
-    "redis://localhost:6379"
-)
-CELERY_RESULT_BACKEND = (
-    "redis://localhost:6379"
-)
+CELERY_BROKER_URL = "redis://localhost:6379"
+CELERY_RESULT_BACKEND = "redis://localhost:6379"
