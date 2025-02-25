@@ -29,20 +29,22 @@ class UserViewSet(ModelViewSet):
 
     queryset = User.objects.all().order_by("username")
     serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
 
-    def get_permissions(self):
-        permission_classes = []
-        if self.action == "create":
-            permission_classes = [permissions.AllowAny]
-        else:
-            permission_classes = [permissions.IsAdminUser]
-        return [permission() for permission in permission_classes]
+    # def get_permissions(self):
+    #     permission_classes = []
+    #     if self.action == "create":
+    #         permission_classes = [permissions.AllowAny]
+    #     else:
+    #         permission_classes = [permissions.IsAdminUser]
+    #     return [permission() for permission in permission_classes]
 
 
 class ProfileViewSet(
     GenericViewSet,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
 ):
     queryset = User.objects.all()
     serializer_class = UserProfileSerializer
@@ -56,37 +58,39 @@ class PassengerViewSet(ModelViewSet):
 
     queryset = Passenger.objects.all()
     serializer_class = PassengerSerializer
+    permission_classes = [permissions.AllowAny]
 
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action in [
-            "update",
-            "partial_update",
-            "retrive",
-            "destroy",
-        ]:
-            permission_classes = [IsOwner]
-        else:  # destroy, list, create
-            permission_classes = [permissions.IsAdminUser]
-        return [permission() for permission in permission_classes]
+    # def get_permissions(self):
+    #     """
+    #     Instantiates and returns the list of permissions that this view requires.
+    #     """
+    #     if self.action in [
+    #         "update",
+    #         "partial_update",
+    #         "retrive",
+    #         "destroy",
+    #     ]:
+    #         permission_classes = [IsOwner]
+    #     else:  # list, create
+    #         permission_classes = [permissions.IsAdminUser]
+    #     return [permission() for permission in permission_classes]
 
 
 class DriverViewSet(ModelViewSet):
     queryset = Driver.objects.all()
     serializer_class = DriverSerializer
+    permission_classes = [permissions.AllowAny]
 
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action in [
-            "update",
-            "partial_update",
-            "retrive",
-        ]:
-            permission_classes = [IsOwner]
-        else:  # destroy, list, create
-            permission_classes = [permissions.IsAdminUser]
-        return [permission() for permission in permission_classes]
+    # def get_permissions(self):
+    #     """
+    #     Instantiates and returns the list of permissions that this view requires.
+    #     """
+    #     if self.action in [
+    #         "update",
+    #         "partial_update",
+    #         "retrive",
+    #     ]:
+    #         permission_classes = [IsOwner]
+    #     else:  # destroy, list, create
+    #         permission_classes = [permissions.IsAdminUser]
+    #     return [permission() for permission in permission_classes]

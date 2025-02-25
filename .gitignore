@@ -1,2 +1,29 @@
 notes.org
 venv/
+**/__pycache__/**
+api/users/rides/__pycache__/*
+
+# Logs
+taxi-frontend/logs
+taxi-frontend/*.log
+taxi-frontend/npm-debug.log*
+taxi-frontend/yarn-debug.log*
+taxi-frontend/yarn-error.log*
+taxi-frontend/pnpm-debug.log*
+taxi-frontend/lerna-debug.log*
+
+taxi-frontend/node_modules
+taxi-frontend/dist
+taxi-frontend/dist-ssr
+taxi-frontend/*.local
+
+# Editor directories and files
+taxi-frontend/.vscode/*
+taxi-frontend/!.vscode/extensions.json
+taxi-frontend/.idea
+taxi-frontend/.DS_Store
+taxi-frontend/*.suo
+taxi-frontend/*.ntvs*
+taxi-frontend/*.njsproj
+taxi-frontend/*.sln
+taxi-frontend/*.sw?

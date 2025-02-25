@@ -4,7 +4,7 @@ from datetime import datetime
 from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
-from rest_framework import mixins, permissions, status, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -25,38 +25,9 @@ User = get_user_model()
 channel_layer = get_channel_layer()
 
 
-class RideRatingsViewSet(viewsets.ModelViewSet):
+class RidesViewSet(viewsets.ModelViewSet):
     """
-    A simple ViewSet for viewing, editing and deleting ride ratings.
-    """
-
-    queryset = Rating.objects.all()
-
-    serializer_class = RatingSerializer
-
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action in [
-            "update",
-            "partial_update",
-            "destroy",
-        ]:
-            permission_classes = [permissions.IsAdminUser]
-        else:
-            permission_classes = [permissions.AllowAny]
-        return [permission() for permission in permission_classes]
-
-
-class RidesViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-):
-    """
-    A simple ViewSet for viewing, editing and deleting rides.
+    A ViewSet for modifying or listing Rides.
     """
 
     serializer_class = RideSerializer
@@ -73,6 +44,29 @@ class RidesViewSet(
         return queryset
 
 
+class RideRatingsViewSet(viewsets.ModelViewSet):
+    """
+    A ViewSet for modifying or listing RideRatings.
+    """
+
+    serializer_class = RatingSerializer
+    queryset = Rating.objects.all()
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in [
+            "update",
+            "partial_update",
+            "destroy",
+        ]:
+            permission_classes = [permissions.IsAdminUser]
+        else:  # list, create
+            permission_classes = [permissions.AllowAny]
+        return [permission() for permission in permission_classes]
+
+
 @api_view(["POST"])
 @permission_classes(
     [
@@ -81,6 +75,9 @@ class RidesViewSet(
     ]
 )
 def request_ride(request):
+    """
+    Endpoint for a user to request a ride with a starting location and a destination
+    """
     passenger_id = request.user.pk
     starting_location = request.data.get("starting_location")  # expects (long, lat)
     destination = request.data.get("destination")  # expects (long, lat)
@@ -98,8 +95,9 @@ def request_ride(request):
         destination,
         ride_uuid,
     )
+    response_data = {**request.data, "ride_uuid": ride_uuid.hex}
     return Response(
-        request.data,
+        response_data,
         status=status.HTTP_200_OK,
     )
 
@@ -112,10 +110,13 @@ def request_ride(request):
     ]
 )
 def offer_ride(request):
+    """
+    Endpoint for drivers to accept the request and give an offer for a ride
+    """
     driver = request.user.pk
     passenger_id = request.data.get("passenger_id")
     # TODO the price should be calculated on the server
-    price = request.data.get("price")
+    price = 10
     ride_uuid = request.data.get("ride_uuid")
     try:
         ride = Ride.objects.get(ride_uuid=ride_uuid)
@@ -125,11 +126,11 @@ def offer_ride(request):
                 status.HTTP_400_BAD_REQUEST,
             )
     except ObjectDoesNotExist:
-        dropoff_time = 0  # TODO calculate
         ride_duration = 0  # TODO calculate
+        dropoff_time = 0  # time.now() + ride_duration
         if not (price and ride_uuid and passenger_id):
             return Response(
-                {"message": "price, ride_uuid and passenger_id are required."},
+                {"message": "ride_uuid and passenger_id are required."},
                 status.HTTP_400_BAD_REQUEST,
             )
         send_ride_offer.delay(
@@ -155,6 +156,9 @@ def offer_ride(request):
     ]
 )
 def accept_ride(request):
+    """
+    Endpoint for users to accept the ride offer from a driver
+    """
     passenger_id = request.user.pk
     driver_id = request.data.get("driver_id")
     starting_location = request.data.get("starting_location")  # expects (long, lat)
@@ -234,6 +238,9 @@ def accept_ride(request):
     ]
 )
 def start_ride(request):
+    """
+    Endpoint for starting the ride
+    """
     driver = request.user.pk
     passenger = request.data.get("passenger")
     ride_uuid = request.data.get("ride_uuid")
@@ -280,7 +287,10 @@ def start_ride(request):
 )
 def finish_ride(
     request,
-):  # successfull canceling from driver
+):
+    """
+    Endpoint for a successfull ending of a ride from the driver
+    """
     passenger = request.data.get("passenger")
     driver = request.user.pk
     ride_uuid = request.data.get("ride_uuid")
@@ -328,9 +338,11 @@ def finish_ride(
         IsPassenger,
     ]
 )
-def cancel_ride(
-    request,
-):  # the passenger changes their mind
+def cancel_ride(request):
+    """
+    Endpoint for canceling a ride when a user changes their mind
+    """
+    # TODO: there should be punishment for changing mind often (spamming)
     passenger_id = request.user.pk
     driver_id = request.data.get("driver_id")
     ride_uuid = request.data.get("ride_uuid")
@@ -357,6 +369,7 @@ def cancel_ride(
                 status.HTTP_200_OK,
             )
         elif ride.status == Ride.Status.ACTIVE:
+            # TODO:
             # calculate price: curernt_time - start_time * 7 (per minute)
             # send message to passenger the ammount owned
             time_now = datetime.now().astimezone()
@@ -399,6 +412,10 @@ def cancel_ride(
     ]
 )
 def rate_ride(request):
+    """
+    Endpoint for giving rating from a user that has finished a ride
+    """
+    # TODO: user can rate only the ride they've ridden
     ride_uuid = request.data.get("ride_uuid")
     if not (ride_uuid):
         return Response(

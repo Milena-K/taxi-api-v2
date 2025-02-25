@@ -29,7 +29,8 @@ class User(
     )
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)  # TODO: change later to False,
+    is_active = models.BooleanField(default=True)
+    # TODO: change later is_active to False,
     # and only True if user is confirmed through sms code
 
     def __str__(self):

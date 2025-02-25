@@ -5,7 +5,7 @@ function App() {
 
   return (
     <>
-      <p>welcome to taxi</p>
+      <p className=''>welcome to taxi</p>
     </>
   )
 }

@@ -15,3 +15,7 @@
 ### Create and run the container for redis
 
 """docker run --name taxi-redis -p 6379:6379 -d redis"""
+
+### Run celery from root folder
+
+"""celery -A api worker -l INFO"""

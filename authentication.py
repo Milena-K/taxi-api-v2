@@ -52,7 +52,7 @@ async def process_events():
     redis = aioredis.from_url("redis://127.0.0.1:6379/1")
     pubsub = redis.pubsub()
     await pubsub.subscribe("events")
-    async for (message) in pubsub.listen():
+    async for message in pubsub.listen():
         if message["type"] != "message":
             continue
         payload = message["data"].decode()

@@ -7,31 +7,57 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Rating',
+            name="Rating",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('rating', models.FloatField(default=5.0)),
-                ('comment', models.CharField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("rating", models.FloatField(default=5.0)),
+                ("comment", models.CharField()),
             ],
         ),
         migrations.CreateModel(
-            name='Ride',
+            name="Ride",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.IntegerField(choices=[(0, 'Created'), (1, 'Active'), (2, 'Completed'), (3, 'Canceled')], default=0)),
-                ('ride_uuid', models.UUIDField(unique=True)),
-                ('starting_location', models.CharField()),
-                ('destination', models.CharField()),
-                ('start_time', models.DateTimeField(blank=True, null=True)),
-                ('end_time', models.DateTimeField(blank=True, null=True)),
-                ('price', models.FloatField(default=0)),
-                ('dropoff_time', models.DateTimeField()),
-                ('ride_duration', models.IntegerField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "status",
+                    models.IntegerField(
+                        choices=[
+                            (0, "Created"),
+                            (1, "Active"),
+                            (2, "Completed"),
+                            (3, "Canceled"),
+                        ],
+                        default=0,
+                    ),
+                ),
+                ("ride_uuid", models.UUIDField(unique=True)),
+                ("starting_location", models.CharField()),
+                ("destination", models.CharField()),
+                ("start_time", models.DateTimeField(blank=True, null=True)),
+                ("end_time", models.DateTimeField(blank=True, null=True)),
+                ("price", models.FloatField(default=0)),
+                ("dropoff_time", models.DateTimeField()),
+                ("ride_duration", models.IntegerField()),
             ],
         ),
     ]

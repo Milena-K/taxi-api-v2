@@ -10,7 +10,7 @@ from ..users.serializers import DriverSerializer, PassengerSerializer
 User = get_user_model()
 
 
-class AccountTests(APITestCase):
+class RideTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         passenger_data = {
@@ -40,17 +40,40 @@ class AccountTests(APITestCase):
     def test_create_ride_request(
         self,
     ):
+        passenger = User.objects.get(pk=self.passenger.pk)
+        passenger_token = RefreshToken.for_user(user=passenger)
+        self.client.credentials(
+            HTTP_AUTHORIZATION="Bearer " + str(passenger_token.access_token)
+        )
         """
         Ensure we can create a ride request
         """
-        passenger_user = User.objects.get(pk=self.passenger.pk)
-        token = RefreshToken.for_user(user=passenger_user)
-        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + str(token.access_token))
         url = reverse("request-ride")
         data = {
             "starting_location": "skopje",
             "destination": "berlin",
         }
+        response = self.client.post(
+            url,
+            data,
+            format="json",
+        )
+        print(response.data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+    def test_offer_ride(
+        self,
+    ):
+        driver = User.objects.get(pk=self.driver.pk)
+        driver_token = RefreshToken.for_user(user=driver)
+        self.client.credentials(
+            HTTP_AUTHORIZATION="Bearer " + str(driver_token.access_token)
+        )
+        url = reverse("offer-ride")
+        data = {"driver": driver.pk, "ride_uuid": "passenger_id"}
         response = self.client.post(
             url,
             data,

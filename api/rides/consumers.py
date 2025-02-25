@@ -6,6 +6,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 
 class RideRequestsConsumer(WebsocketConsumer):
+    # TODO: only drivers should be able to connect
     def connect(self):
         self.accept()
         self.groups.append(
