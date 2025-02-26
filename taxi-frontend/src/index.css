@@ -20,3 +20,13 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+html, body, #root, #root>div {
+  height: 100%;
+}
+
+
+/* #root { */
+/*   max-width: 1280px; */
+/*   margin: 0 auto; */
+/*   text-align: center; */
+/* } */

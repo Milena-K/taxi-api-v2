@@ -10,17 +10,27 @@ function Login() {
     }
 
     return (
-        <div className="grid gap-4 w-1/2 m-auto max-w-100">
-            <h2 className="text-white text-xl">Log in</h2>
-            <img src={TaxiLogo} className="w-40 h-40 m-auto" />
-            <Input type="text" placeholder="username" />
-            <Input type="password" placeholder="password" />
-            <div className="w-fit justify-self-end">
-                <Button text="login" onClick={login_user} />
+        <div className="flex m-auto h-full max-w-6xl">
+            <div className="invisible h-0 w-0 grow-0 flex
+                            md:grow md:visible md:h-full md:w-full lg:visible">
+                <img src={TaxiLogo} className="w-40 h-40 m-auto self-center" />
             </div>
-            <p className="hover:underline cursor-pointer
+            <div className="grow h-full flex w-full">
+                <div className="grid gap-4 w-fit justify-self-center m-auto
+                                md:border md:rounded-2xl md:p-9 md:align-center
+                                ">
+                    <h2 className="text-center text-white text-xl">Log in</h2>
+                    <img src={TaxiLogo} className="w-40 h-40 m-auto md:hidden" />
+                    <Input type="text" placeholder="username" />
+                    <Input type="password" placeholder="password" />
+                    <div className="w-fit justify-self-end">
+                        <Button text="login" onClick={login_user} />
+                    </div>
+                    <p className="hover:underline cursor-pointer
                             justify-self-start"
-            >create new account</p>
+                    >create new account</p>
+                </div>
+            </div>
         </div>
     )
 }
