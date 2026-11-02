@@ -178,11 +178,9 @@ def accept_ride(request):
         and ride_duration
     ):
         return Response(
-            {
-                "message": "driver_id, starting_location,\
+            {"message": "driver_id, starting_location,\
                 destination, dropoff_time, ride_duration,\
-                price and ride_uuid are required."
-            },
+                price and ride_uuid are required."},
             status.HTTP_400_BAD_REQUEST,
         )
 
